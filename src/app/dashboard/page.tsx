@@ -15,18 +15,18 @@ export default async function Dashboard() {
   const urls = await getUserUrls() as UrlDocument[];
   
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Your Links</h1>
+    <section>
+      <h1 className="text-3xl font-bold mb-8 tracking-tight">Your Links</h1>
       {urls.length === 0 ? (
-        <div className="bg-white p-6 rounded-lg shadow text-center">
-          <p className="text-gray-600">You haven't created any shortened URLs yet.</p>
-          <a href="/" className="mt-4 inline-block text-blue-600 hover:underline">
+        <div className="p-6 rounded-lg shadow-md border border-border text-center">
+          <p className="text-muted-foreground">You haven't created any shortened URLs yet.</p>
+          <a href="/" className="mt-4 inline-block text-primary hover:underline">
             Create your first shortened URL
           </a>
         </div>
       ) : (
         <LinksList urls={urls} />
       )}
-    </div>
+    </section>
   );
 }

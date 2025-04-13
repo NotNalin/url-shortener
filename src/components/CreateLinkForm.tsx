@@ -93,16 +93,16 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="p-6 rounded-lg shadow-md border border-border">
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label className="block text-gray-700 mb-2" htmlFor="url">
+          <label className="block mb-2 font-medium" htmlFor="url">
             URL to shorten*
           </label>
           <input
             id="url"
             type="text"
-            className="w-full px-3 py-2 border rounded-md"
+            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="https://example.com/long-url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -112,17 +112,17 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
 
         {isLoggedIn && (
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2" htmlFor="customSlug">
+            <label className="block mb-2 font-medium" htmlFor="customSlug">
               Custom short URL (optional)
             </label>
             <div className="flex items-center">
-              <span className="text-gray-500 mr-1">
+              <span className="mr-1 text-muted-foreground">
                 {typeof window !== "undefined" ? window.location.origin : ""}/
               </span>
               <input
                 id="customSlug"
                 type="text"
-                className="flex-1 px-3 py-2 border rounded-md"
+                className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="my-link"
                 value={customSlug}
                 onChange={(e) => setCustomSlug(e.target.value)}
@@ -135,7 +135,7 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
           <div className="mb-4">
             <button
               type="button"
-              className="text-blue-600 hover:text-blue-800"
+              className="text-primary hover:text-primary-hover"
               onClick={() => setShowAdvanced(!showAdvanced)}
             >
               {showAdvanced ? "Hide advanced options" : "Show advanced options"}
@@ -144,14 +144,14 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
         )}
 
         {isLoggedIn && showAdvanced && (
-          <div className="mb-6 bg-gray-50 p-4 rounded-md">
+          <div className="mb-6 p-4 rounded-md border border-border">
             <div className="mb-4">
-              <label className="block text-gray-700 mb-2" htmlFor="expiryTime">
+              <label className="block mb-2 font-medium" htmlFor="expiryTime">
                 Link expiration
               </label>
               <select
                 id="expiryTime"
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 value={expiryTime}
                 onChange={(e) => setExpiryTime(e.target.value)}
               >
@@ -167,7 +167,7 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
             {expiryTime === "custom" && (
               <div className="mb-4">
                 <label
-                  className="block text-gray-700 mb-2"
+                  className="block mb-2 font-medium"
                   htmlFor="customDate"
                 >
                   Custom expiration date
@@ -175,7 +175,7 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
                 <input
                   id="customDate"
                   type="datetime-local"
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   value={customDate}
                   onChange={(e) => setCustomDate(e.target.value)}
                 />
@@ -183,13 +183,13 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
             )}
 
             <div className="mb-4">
-              <label className="block text-gray-700 mb-2" htmlFor="maxUses">
+              <label className="block mb-2 font-medium" htmlFor="maxUses">
                 Maximum uses (clicks)
               </label>
               <input
                 id="maxUses"
                 type="number"
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Unlimited"
                 min="1"
                 value={maxUses}
@@ -198,18 +198,18 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
             </div>
 
             <div className="mb-4">
-              <label className="block text-gray-700 mb-2" htmlFor="password">
+              <label className="block mb-2 font-medium" htmlFor="password">
                 Password protection
               </label>
               <input
                 id="password"
                 type="password"
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="No password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm mt-1 text-muted-foreground">
                 Leave blank for no password
               </p>
             </div>
@@ -220,7 +220,7 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+          className="w-full py-2 px-4 rounded-md btn-primary disabled:opacity-70"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Processing..." : "Shorten URL"}
@@ -228,14 +228,14 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
       </form>
 
       {result && (
-        <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
-          <h3 className="font-medium text-green-800 mb-2">
+        <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+          <h3 className="font-medium text-green-800 dark:text-green-400 mb-2">
             URL shortened successfully!
           </h3>
           <div className="flex items-center">
             <input
               type="text"
-              className="flex-1 px-3 py-2 border rounded-l-md bg-white"
+              className="flex-1 px-3 py-2 border rounded-l-md"
               value={result.shortUrl}
               readOnly
             />
@@ -244,7 +244,7 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
                 navigator.clipboard.writeText(result.shortUrl);
                 alert("Copied to clipboard!");
               }}
-              className="bg-gray-200 px-4 py-2 rounded-r-md hover:bg-gray-300"
+              className="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-r-md hover:bg-gray-300 dark:hover:bg-gray-600"
             >
               Copy
             </button>
@@ -253,8 +253,8 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
       )}
 
       {!isLoggedIn && (
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-          <p className="text-blue-800">
+        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+          <p className="text-blue-800 dark:text-blue-400">
             <a href="/sign-in" className="underline">
               Sign in
             </a>{" "}

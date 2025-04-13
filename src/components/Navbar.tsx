@@ -3,33 +3,42 @@
 
 import Link from "next/link";
 import { UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { ThemeSwitch } from "./ThemeSwitch"; // Update the path to the correct location of ThemeSwitch
 
 export function Navbar() {
   return (
-    <nav className="bg-white shadow py-4">
-      <div className="container mx-auto px-4 flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold text-blue-600">
-          URL Shortener
-        </Link>
-
-        <div className="flex items-center gap-4">
+    <nav className="py-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between">
+        <div className="flex items-center">
+          <Link href="/" className="text-3xl font-semibold tracking-tight">
+            URL Shortener
+          </Link>
+        </div>
+        <div className="flex flex-row gap-4 mt-6 md:mt-0 md:ml-auto items-center">
           <SignedIn>
             <Link
               href="/dashboard"
-              className="text-gray-600 hover:text-gray-900"
+              className="transition-all hover:text-neutral-800 dark:hover:text-neutral-200"
             >
               Dashboard
             </Link>
             <UserButton afterSignOutUrl="/" />
           </SignedIn>
           <SignedOut>
-            <Link href="/sign-in" className="text-gray-600 hover:text-gray-900">
+            <Link 
+              href="/sign-in" 
+              className="transition-all hover:text-neutral-800 dark:hover:text-neutral-200"
+            >
               Sign In
             </Link>
-            <Link href="/sign-up" className="text-gray-600 hover:text-gray-900">
+            <Link 
+              href="/sign-up" 
+              className="transition-all hover:text-neutral-800 dark:hover:text-neutral-200"
+            >
               Sign Up
             </Link>
           </SignedOut>
+          <ThemeSwitch />
         </div>
       </div>
     </nav>

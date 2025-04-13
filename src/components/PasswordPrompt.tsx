@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { verifyUrlPassword } from "@/app/actions";
+import { FaLock } from "react-icons/fa";
 
 interface PasswordPromptProps {
   urlId: string;
@@ -35,15 +36,22 @@ export function PasswordPrompt({ urlId, slug }: PasswordPromptProps) {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-xl font-bold mb-4">Password Protected Link</h2>
-      <p className="mb-4 text-gray-600">
+    <div className="max-w-md mx-auto mt-10 p-6 rounded-lg shadow-md border border-border">
+      <div className="flex items-center justify-center mb-6">
+        <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/20">
+          <FaLock className="text-blue-600 dark:text-blue-400 text-xl" />
+        </div>
+      </div>
+      <h2 className="text-xl font-bold mb-4 text-center">
+        Password Protected Link
+      </h2>
+      <p className="mb-6 text-center text-muted-foreground">
         This link is password protected. Please enter the password to continue.
       </p>
 
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label className="block text-gray-700 mb-2" htmlFor="password">
+          <label className="block mb-2 font-medium" htmlFor="password">
             Password
           </label>
           <input
@@ -55,18 +63,19 @@ export function PasswordPrompt({ urlId, slug }: PasswordPromptProps) {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          {error && <div className="mb-4 text-red-500">{error}</div>}
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Verifying..." : "Continue"}
+          </button>
         </div>
-
-        {error && <div className="mb-4 text-red-500">{error}</div>}
-
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Verifying..." : "Continue"}
-        </button>
       </form>
+      <p className="text-sm text-center text-muted-foreground">
+        If you don't have a password, please contact the link owner.
+      </p>
     </div>
   );
 }

@@ -1,50 +1,93 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+::selection {
+  background-color: #47a3f3;
+  color: #fefefe;
+}
+
+/* Light theme colors */
 :root {
-  --background: #ffffff;
   --foreground: #1a1a1a;
+  --background: #ffffff;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --border: #e5e5e5;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-  --font-mono: var(--font-mono);
+/* Dark theme colors */
+.dark {
+  --foreground: #f5f5f5;
+  --background: #121212;
+  --muted: #1e1e1e;
+  --muted-foreground: #a3a3a3;
+  --border: #333333;
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #121212;
-    --foreground: #f5f5f5;
-  }
+html {
+  min-width: 360px;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans);
 }
 
-/* Fix for form elements in dark mode */
-@media (prefers-color-scheme: dark) {
-  .bg-white {
-    background-color: #1e1e1e;
-  }
-  
-  .text-gray-700, .text-gray-600, .text-gray-500 {
-    color: #d1d1d1;
-  }
-  
-  .border {
-    border-color: #333;
-  }
-  
-  .bg-gray-50 {
-    background-color: #252525;
-  }
-  
-  input, select {
-    background-color: #252525;
-    color: #f5f5f5;
-  }
+input, select, textarea {
+  background-color: var(--background);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+.bg-white {
+  background-color: var(--muted);
+}
+
+.text-gray-700, .text-gray-600, .text-gray-500 {
+  color: var(--muted-foreground);
+}
+
+.bg-gray-50 {
+  background-color: var(--muted);
+}
+
+.border {
+  border-color: var(--border);
+}
+
+.shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.dark .shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Remove Safari input shadow on mobile */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="datetime-local"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.title {
+  text-wrap: balance;
 }

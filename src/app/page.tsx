@@ -7,9 +7,13 @@ export default async function Home() {
   const isLoggedIn = !!userId;
   
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">URL Shortener</h1>
+    <section>
+      <h1 className="text-3xl font-bold mb-8 tracking-tight">URL Shortener</h1>
+      <p className="mb-8 text-muted-foreground">
+        Create short, memorable links for your long URLs. Free to use, with premium features 
+        available when you sign in.
+      </p>
       <CreateLinkForm isLoggedIn={isLoggedIn} />
-    </div>
+    </section>
   );
 }
