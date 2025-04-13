@@ -8,8 +8,7 @@ export default async function Home() {
   
   return (
     <section>
-      <h1 className="text-3xl font-bold mb-8 tracking-tight">URL Shortener</h1>
-      <p className="mb-8 text-muted-foreground">
+      <p className="mb-4 text-muted-foreground">
         Create short, memorable links for your long URLs. Free to use, with premium features 
         available when you sign in.
       </p>

@@ -110,7 +110,8 @@ export async function getUserUrls() {
   await connectToDatabase();
 
   try {
-    return await Url.find({ userId }).sort({ createdAt: -1 });
+    const urls = await Url.find({ userId }).sort({ createdAt: -1 });
+    return JSON.parse(JSON.stringify(urls));
   } catch (error) {
     console.error("Error fetching user URLs:", error);
     return [];

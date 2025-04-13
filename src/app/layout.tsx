@@ -7,6 +7,7 @@ import { Navbar } from "../components/Navbar";
 import Footer from "../components/Footer";
 import { ThemeProvider } from "../components/ThemeSwitch";
 import { ClerkProvider } from "@clerk/nextjs";
+import { dark } from "@clerk/themes";
 
 export const metadata: Metadata = {
   title: "URL Shortener",
@@ -23,16 +24,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider appearance={{ baseTheme: dark }}>
       <html lang="en" className={cx(GeistSans.variable, GeistMono.variable)}>
-        <body className="antialiased flex flex-col items-center justify-center mx-auto mt-2 lg:mt-8 mb-20 lg:mb-40">
+        <body className="antialiased flex flex-col items-center justify-center mx-auto mt-1 lg:mt-4 mb-10 lg:mb-20">
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-            <main className="flex-auto min-w-0 mt-2 md:mt-6 flex flex-col px-6 sm:px-4 md:px-0 max-w-[630px] w-full">
+            <main className="flex-auto min-w-0 mt-1 md:mt-3 flex flex-col px-4 sm:px-2 md:px-0 max-w-[800px] w-full">
               <Navbar />
               {children}
               <Footer />
