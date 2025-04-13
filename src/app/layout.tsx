@@ -7,9 +7,7 @@ import { Navbar } from "../components/Navbar";
 import Footer from "../components/Footer";
 import { ThemeProvider } from "../components/ThemeSwitch";
 import { ClerkProvider } from "@clerk/nextjs";
-import { dark, neobrutalism, shadesOfPurple } from "@clerk/themes";
 import { Analytics } from "@vercel/analytics/react"
-import { defaultInternalTheme } from "@clerk/themes/dist/clerk-js/src/ui/foundations";
 
 export const metadata: Metadata = {
   title: "URL Shortener",
