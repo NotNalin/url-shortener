@@ -2,7 +2,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import { UrlDocument } from "../types";
 
-interface UrlModel extends Model<UrlDocument & Document> {}
+type UrlModel = Model<UrlDocument & Document>;
 
 const urlSchema = new Schema<UrlDocument & Document>({
   originalUrl: { type: String, required: true },

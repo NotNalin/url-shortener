@@ -4,7 +4,7 @@
 import React from "react";
 import {
   FaGithub,
-  FaTwitter,
+  FaGlobe,
 } from "react-icons/fa";
 
 const YEAR = new Date().getFullYear();
@@ -25,8 +25,8 @@ function SocialLink({ href, icon: Icon }: { href: string; icon: React.ComponentT
 function SocialLinks() {
   return (
     <div className="flex text-lg gap-3.5 float-right transition-opacity duration-300 hover:opacity-90">
-      <SocialLink href="https://github.com/your-username" icon={FaGithub} />
-      <SocialLink href="https://twitter.com/your-username" icon={FaTwitter} />
+      <SocialLink href="https://github.com/NotNalin" icon={FaGithub} />
+      <SocialLink href="https://notnal.in" icon={FaGlobe} />
     </div>
   );
 }
@@ -39,7 +39,7 @@ export default function Footer() {
         className="no-underline"
         href="#"
       >
-        URL Shortener
+        NotNalin
       </a>
       <SocialLinks />
     </small>

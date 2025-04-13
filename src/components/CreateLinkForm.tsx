@@ -4,6 +4,7 @@
 import { useState, FormEvent } from "react";
 import { createShortUrl } from "@/app/actions";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface CreateLinkFormProps {
   isLoggedIn: boolean;
@@ -117,7 +118,10 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
             </label>
             <div className="flex items-center">
               <span className="mr-1 text-muted-foreground">
-                {typeof window !== "undefined" ? window.location.origin : ""}/
+                {typeof window !== "undefined"
+                  ? window.location.origin.replace(/(^\w+:|^)\/\//, "")
+                  : ""}
+                /
               </span>
               <input
                 id="customSlug"
@@ -166,10 +170,7 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
 
             {expiryTime === "custom" && (
               <div className="mb-4">
-                <label
-                  className="block mb-2 font-medium"
-                  htmlFor="customDate"
-                >
+                <label className="block mb-2 font-medium" htmlFor="customDate">
                   Custom expiration date
                 </label>
                 <input
@@ -199,18 +200,18 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
 
             <div className="mb-4">
               <label className="block mb-2 font-medium" htmlFor="password">
-                Password protection
+                Passphrase
               </label>
               <input
                 id="password"
                 type="password"
                 className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="No password"
+                placeholder="Enter passphrase"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
               <p className="text-sm mt-1 text-muted-foreground">
-                Leave blank for no password
+                Leave blank for no passphrase. This will be required to access the link.
               </p>
             </div>
           </div>
@@ -255,13 +256,13 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
       {!isLoggedIn && (
         <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
           <p className="text-blue-800 dark:text-blue-400">
-            <a href="/sign-in" className="underline">
+            <Link href="/sign-in" className="underline">
               Sign in
-            </a>{" "}
+            </Link>{" "}
             or{" "}
-            <a href="/sign-up" className="underline">
+            <Link href="/sign-up" className="underline">
               sign up
-            </a>{" "}
+            </Link>{" "}
             to use custom URLs, expiration dates, click limits and password
             protection.
           </p>

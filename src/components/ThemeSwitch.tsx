@@ -37,12 +37,12 @@ export const ThemeSwitch: React.FC = () => {
     return 'light'; 
   };
 
-  const reflectPreference = (theme: 'light' | 'dark') => {
+  const reflectPreference = React.useCallback((theme: 'light' | 'dark') => {
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(theme);
     setCurrentTheme(theme);
     setTheme(theme);
-  };
+  }, [setTheme]);
 
   React.useEffect(() => {
     setMounted(true);
@@ -59,7 +59,7 @@ export const ThemeSwitch: React.FC = () => {
     mediaQuery.addEventListener('change', handleChange);
 
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [setTheme]);
+  }, [setTheme, reflectPreference]);
 
   const toggleTheme = () => {
     const newTheme = currentTheme === 'light' ? 'dark' : 'light';

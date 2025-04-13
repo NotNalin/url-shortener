@@ -24,7 +24,7 @@ export async function createShortUrl(
 
   try {
     new URL(originalUrl);
-  } catch (e) {
+  } catch {
     return {
       success: false,
       error: "Please enter a valid URL including http:// or https://",
@@ -46,7 +46,14 @@ export async function createShortUrl(
   }
 
   // Basic URL data
-  const urlData: any = {
+  const urlData: {
+    originalUrl: string;
+    slug: string;
+    userId: string | null;
+    expiresAt?: Date;
+    maxClicks?: number;
+    passwordHash?: string;
+  } = {
     originalUrl,
     slug,
     userId,

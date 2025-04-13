@@ -4,6 +4,7 @@ import { LinksList } from "../../components/LinksList";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { FaLink } from "react-icons/fa6";
+import Link from "next/link";
 
 export default async function Dashboard() {
   const user = await currentUser();
@@ -23,14 +24,14 @@ export default async function Dashboard() {
             <FaLink />
           </div>
           <p className="text-muted-foreground text-lg">
-            You haven't created any shortened URLs yet.
+            There are no shortened URLs yet.
           </p>
-          <a
+          <Link
             href="/"
             className="mt-4 inline-block py-2 px-4 rounded-md btn-primary"
           >
             Create your first shortened URL
-          </a>
+          </Link>
         </div>
       ) : (
         <LinksList urls={urls} />

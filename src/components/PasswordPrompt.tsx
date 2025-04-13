@@ -28,7 +28,7 @@ export function PasswordPrompt({ urlId, slug }: PasswordPromptProps) {
       } else {
         setError("Incorrect password");
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -43,22 +43,25 @@ export function PasswordPrompt({ urlId, slug }: PasswordPromptProps) {
         </div>
       </div>
       <h2 className="text-xl font-bold mb-4 text-center">
-        Password Protected Link
+        Protected Link
       </h2>
+      <p className="mb-2 text-center text-muted-foreground">
+        {typeof window !== "undefined" ? window.location.origin.replace(/(^\w+:|^)\/\//, "") : ""}/{slug}
+      </p>
       <p className="mb-6 text-center text-muted-foreground">
-        This link is password protected. Please enter the password to continue.
+        This link is protected. Please enter the passphrase to continue.
       </p>
 
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label className="block mb-2 font-medium" htmlFor="password">
-            Password
+            Passphrase
           </label>
           <input
             id="password"
             type="password"
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter password"
+            placeholder="Enter passphrase"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -74,7 +77,7 @@ export function PasswordPrompt({ urlId, slug }: PasswordPromptProps) {
         </div>
       </form>
       <p className="text-sm text-center text-muted-foreground">
-        If you don't have a password, please contact the link owner.
+        If you do not have a passphrase, please contact the link owner.
       </p>
     </div>
   );
