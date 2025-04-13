@@ -7,7 +7,9 @@ import { Navbar } from "../components/Navbar";
 import Footer from "../components/Footer";
 import { ThemeProvider } from "../components/ThemeSwitch";
 import { ClerkProvider } from "@clerk/nextjs";
-import { dark } from "@clerk/themes";
+import { dark, neobrutalism, shadesOfPurple } from "@clerk/themes";
+import { Analytics } from "@vercel/analytics/react"
+import { defaultInternalTheme } from "@clerk/themes/dist/clerk-js/src/ui/foundations";
 
 export const metadata: Metadata = {
   title: "URL Shortener",
@@ -24,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider appearance={{ baseTheme: dark }}>
+    <ClerkProvider>
       <html lang="en" className={cx(GeistSans.variable, GeistMono.variable)}>
         <body className="antialiased flex flex-col items-center justify-center mx-auto mt-1 lg:mt-4 mb-10 lg:mb-20">
           <ThemeProvider
@@ -39,6 +41,7 @@ export default function RootLayout({
               <Footer />
             </main>
           </ThemeProvider>
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
