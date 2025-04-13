@@ -1,4 +1,3 @@
-// lib/types.ts
 export interface UrlDocument {
   _id: string;
   originalUrl: string;

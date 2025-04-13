@@ -1,4 +1,3 @@
-// components/PasswordPrompt.tsx
 "use client";
 
 import { useState } from "react";
@@ -42,11 +41,12 @@ export function PasswordPrompt({ urlId, slug }: PasswordPromptProps) {
           <FaLock className="text-blue-600 dark:text-blue-400 text-xl" />
         </div>
       </div>
-      <h2 className="text-xl font-bold mb-4 text-center">
-        Protected Link
-      </h2>
+      <h2 className="text-xl font-bold mb-4 text-center">Protected Link</h2>
       <p className="mb-2 text-center text-muted-foreground">
-        {typeof window !== "undefined" ? window.location.origin.replace(/(^\w+:|^)\/\//, "") : ""}/{slug}
+        {typeof window !== "undefined"
+          ? window.location.origin.replace(/(^\w+:|^)\/\//, "")
+          : ""}
+        /{slug}
       </p>
       <p className="mb-6 text-center text-muted-foreground">
         This link is protected. Please enter the passphrase to continue.

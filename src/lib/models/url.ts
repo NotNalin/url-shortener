@@ -1,4 +1,3 @@
-// lib/models/url.ts
 import mongoose, { Schema, Document, Model } from "mongoose";
 import { UrlDocument } from "../types";
 

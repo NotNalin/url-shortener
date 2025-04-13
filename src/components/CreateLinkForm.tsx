@@ -1,10 +1,11 @@
-// components/CreateLinkForm.tsx
 "use client";
 
 import { useState, FormEvent } from "react";
 import { createShortUrl } from "@/app/actions";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { FaChevronDown } from "react-icons/fa6";
+import { FaEyeSlash, FaEye } from "react-icons/fa";
 
 interface CreateLinkFormProps {
   isLoggedIn: boolean;
@@ -22,6 +23,7 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
   const [expiryTime, setExpiryTime] = useState<string>("never");
   const [maxUses, setMaxUses] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [customDate, setCustomDate] = useState<string>("");
   const [result, setResult] = useState<FormResult>(null);
   const [error, setError] = useState<string>("");
@@ -139,10 +141,19 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
           <div className="mb-4">
             <button
               type="button"
-              className="text-primary hover:text-primary-hover"
+              className="flex items-center gap-2 px-4 py-2 text-sm rounded-md border border-border hover:bg-accent transition-colors duration-200"
               onClick={() => setShowAdvanced(!showAdvanced)}
             >
-              {showAdvanced ? "Hide advanced options" : "Show advanced options"}
+              <span>
+                {showAdvanced
+                  ? "Hide advanced options"
+                  : "Show advanced options"}
+              </span>
+              <FaChevronDown
+                className={`transition-transform duration-200 ${
+                  showAdvanced ? "rotate-180" : ""
+                }`}
+              />
             </button>
           </div>
         )}
@@ -153,19 +164,24 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
               <label className="block mb-2 font-medium" htmlFor="expiryTime">
                 Link expiration
               </label>
-              <select
-                id="expiryTime"
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                value={expiryTime}
-                onChange={(e) => setExpiryTime(e.target.value)}
-              >
-                <option value="never">Never</option>
-                <option value="1h">1 hour</option>
-                <option value="24h">24 hours</option>
-                <option value="7d">7 days</option>
-                <option value="30d">30 days</option>
-                <option value="custom">Custom date</option>
-              </select>
+              <div className="relative">
+                <select
+                  id="expiryTime"
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary appearance-none pr-10"
+                  value={expiryTime}
+                  onChange={(e) => setExpiryTime(e.target.value)}
+                >
+                  <option value="never">Never</option>
+                  <option value="1h">1 hour</option>
+                  <option value="24h">24 hours</option>
+                  <option value="7d">7 days</option>
+                  <option value="30d">30 days</option>
+                  <option value="custom">Custom date</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                  <FaChevronDown />
+                </div>
+              </div>
             </div>
 
             {expiryTime === "custom" && (
@@ -202,16 +218,26 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
               <label className="block mb-2 font-medium" htmlFor="password">
                 Passphrase
               </label>
-              <input
-                id="password"
-                type="password"
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Enter passphrase"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary pr-10"
+                  placeholder="Enter passphrase"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
               <p className="text-sm mt-1 text-muted-foreground">
-                Leave blank for no passphrase. This will be required to access the link.
+                Leave blank for no passphrase. This will be required to access
+                the link.
               </p>
             </div>
           </div>

@@ -1,4 +1,3 @@
-// components/Navbar.tsx
 "use client";
 
 import Link from "next/link";
@@ -8,47 +7,41 @@ import { ThemeSwitch } from "./ThemeSwitch";
 export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-sm mb-4 sm:mb-6 lg:mb-8">
-      <div className="container mx-auto px-2 sm:px-4">
+      <div className="container mx-auto px-4 sm:px-0">
         <div className="flex h-14 items-center justify-between">
           <div className="flex items-center">
             <Link
               href="/"
-              className="text-lg sm:text-xl lg:text-4xl font-semibold tracking-tight hover:text-primary transition-colors"
+              className="text-lg sm:text-xl font-bold hover:text-primary transition-colors duration-200"
             >
               URL Shortener
             </Link>
           </div>
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center space-x-3 px-2 sm:px-4">
             <SignedIn>
               <Link
                 href="/dashboard"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md hover:bg-muted/50"
+                className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent transition-colors duration-200"
               >
                 Dashboard
               </Link>
-              <div className="pl-1">
-                <UserButton 
-                  afterSignOutUrl="/"
-                />
-              </div>
+              <UserButton />
             </SignedIn>
             <SignedOut>
               <Link
                 href="/sign-in"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md hover:bg-muted/50"
+                className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md border border-border hover:bg-accent transition-colors duration-200"
               >
                 Sign In
               </Link>
               <Link
                 href="/sign-up"
-                className="text-sm font-medium bg-primary text-white hover:bg-primary-hover transition-colors px-2 py-1.5 rounded-md"
+                className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md border border-border hover:bg-accent transition-colors duration-200"
               >
                 Sign Up
               </Link>
             </SignedOut>
-            <div className="pl-1">
-              <ThemeSwitch />
-            </div>
+            <ThemeSwitch />
           </div>
         </div>
       </div>
