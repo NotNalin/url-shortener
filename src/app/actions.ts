@@ -2,10 +2,20 @@
 
 import { connectToDatabase } from "@/lib/db";
 import { Url } from "../lib/models/url";
-import { CreateUrlResponse, VerifyPasswordResponse } from "@/lib/types";
+import { Analytics } from "../lib/models/analytics";
+import {
+  CreateUrlResponse,
+  VerifyPasswordResponse,
+  UrlDocument,
+} from "@/lib/types";
 import { nanoid } from "nanoid";
 import bcrypt from "bcryptjs";
 import { auth } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
+import { getCachedLocationFromIP } from "@/lib/utils/geolocation";
+import { parseUserAgent } from "@/lib/utils/userAgent";
+import { getClientIP } from "@/lib/utils/ipAddress";
+import { createHash } from "crypto";
 
 // Create shortened URL
 export async function createShortUrl(
@@ -151,20 +161,161 @@ export async function verifyUrlPassword(
     const url = await Url.findById(urlId);
 
     if (!url || !url.passwordHash) {
+      console.log(
+        `[verifyUrlPassword] No URL found or no password hash for ID: ${urlId}`
+      );
       return { success: false };
     }
 
     const passwordMatches = await bcrypt.compare(password, url.passwordHash);
 
     if (passwordMatches) {
-      // Increment click count on successful password verification
+      console.log(`[verifyUrlPassword] Password verified for URL: ${url.slug}`);
+
+      // Increment click count only after successful password verification
       await Url.findByIdAndUpdate(urlId, { $inc: { currentClicks: 1 } });
-      return { success: true, originalUrl: url.originalUrl };
+
+      // Record analytics for this visit
+      await recordPasswordProtectedVisit(url);
+
+      // Add a flag to indicate that analytics have been recorded
+      // This will be used in the slug page to avoid double-counting
+      return {
+        success: true,
+        originalUrl: url.originalUrl,
+        analyticsRecorded: true,
+      };
     }
 
+    console.log(`[verifyUrlPassword] Incorrect password for URL: ${url.slug}`);
     return { success: false };
   } catch (error) {
     console.error("Error verifying password:", error);
     return { success: false };
+  }
+}
+
+/**
+ * Record analytics for password-protected URLs
+ */
+async function recordPasswordProtectedVisit(url: UrlDocument) {
+  try {
+    console.log(
+      `[recordPasswordProtectedVisit] Recording analytics for slug: ${url.slug}`
+    );
+
+    // Ensure database connection is established
+    await connectToDatabase();
+
+    const headersList = await headers();
+    const userAgent = headersList.get("user-agent") || "";
+    const referer = headersList.get("referer") || "";
+
+    // Extract request URL information safely
+    let requestUrl: URL | null = null;
+    const urlHeader = headersList.get("url") || "";
+
+    // Get referrer information for URL parameters
+    let originalReferrer = "";
+
+    try {
+      if (urlHeader) {
+        requestUrl = new URL(urlHeader);
+        originalReferrer =
+          requestUrl.searchParams.get("original_referrer") || "";
+      }
+    } catch (error) {
+      console.error(
+        "[recordPasswordProtectedVisit] Invalid URL from headers:",
+        error
+      );
+    }
+
+    // Use the effective referrer for analytics
+    const effectiveReferrer = originalReferrer || referer;
+
+    // Get IP address using our utility function
+    const ipAddress = await getClientIP();
+
+    // Get location data with caching
+    let locationData;
+    try {
+      locationData = await getCachedLocationFromIP(ipAddress);
+    } catch (locError) {
+      console.error(
+        `[recordPasswordProtectedVisit] Error getting location:`,
+        locError
+      );
+      locationData = { country: "Unknown", region: "Unknown", isp: "Unknown" };
+    }
+
+    // Generate a more consistent visitor ID using hash
+    const visitorIdInput = `${ipAddress}-${userAgent}`;
+    const visitorId = createHash("sha256")
+      .update(visitorIdInput)
+      .digest("hex")
+      .substring(0, 16);
+
+    // Parse user agent data with shared utility
+    const userAgentData = parseUserAgent(userAgent);
+
+    // Make sure we have a valid location object even if parts of it are unknown
+    const safeLocationData = {
+      country: locationData?.country || "Unknown",
+      region: locationData?.region || "Unknown",
+      isp: locationData?.isp || "Unknown",
+    };
+
+    // Validate url ID
+    if (!url._id) {
+      console.error(
+        `[recordPasswordProtectedVisit] Missing URL ID for slug: ${url.slug}`
+      );
+      return false;
+    }
+
+    // Create analytics entry with location data
+    const analyticsRecord = {
+      urlId: url._id.toString(),
+      slug: url.slug,
+      visitorId,
+      ipAddress,
+      referer: effectiveReferrer,
+      userAgent: {
+        browser: {
+          name: userAgentData.browser.name,
+          version: userAgentData.browser.version,
+          major: userAgentData.browser.major,
+          type: userAgentData.browser.type,
+        },
+        cpu: {
+          architecture: userAgentData.cpu.architecture,
+        },
+        device: {
+          vendor: userAgentData.device.vendor,
+          model: userAgentData.device.model,
+          type: userAgentData.device.type,
+        },
+        engine: {
+          name: userAgentData.engine.name,
+          version: userAgentData.engine.version,
+        },
+        os: {
+          name: userAgentData.os.name,
+          version: userAgentData.os.version,
+        },
+      },
+      location: safeLocationData,
+      timestamp: new Date(),
+    };
+
+    const analyticsEntry = await Analytics.create(analyticsRecord);
+    return true;
+  } catch (error) {
+    console.error(
+      `[recordPasswordProtectedVisit] Error recording analytics for slug: ${url.slug}:`,
+      error
+    );
+    return false;
   }
 }

@@ -10,9 +10,11 @@ import {
   FaKey,
   FaClock,
   FaMousePointer,
-  FaPlus,
+  FaChartBar,
+  FaQrcode,
 } from "react-icons/fa";
 import Link from "next/link";
+import { QRCodeSVG } from "qrcode.react";
 
 interface LinksListProps {
   urls: UrlDocument[];
@@ -32,6 +34,7 @@ function formatDateTime(date: Date | string) {
 
 export function LinksList({ urls }: LinksListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showQRCode, setShowQRCode] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleDelete(id: string) {
@@ -49,19 +52,44 @@ export function LinksList({ urls }: LinksListProps) {
     alert("URL copied to clipboard!");
   }
 
+  function downloadQRCode(slug: string) {
+    const url = `${window.location.origin}/${slug}`;
+    const svg = document.querySelector(`#qr-code-${slug} svg`);
+    if (svg) {
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+      img.onload = () => {
+        // Set canvas size to accommodate QR code and text
+        canvas.width = img.width;
+        canvas.height = img.height + 40; // Extra space for text
+
+        // Draw white background
+        ctx!.fillStyle = "white";
+        ctx!.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw QR code
+        ctx!.drawImage(img, 0, 0);
+
+        // Add text
+        ctx!.font = "14px Arial";
+        ctx!.fillStyle = "black";
+        ctx!.textAlign = "center";
+        ctx!.fillText(url, canvas.width / 2, img.height + 20);
+
+        const pngFile = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        downloadLink.download = `qr-code-${slug}.png`;
+        downloadLink.href = pngFile;
+        downloadLink.click();
+      };
+      img.src = "data:image/svg+xml;base64," + btoa(svgData);
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold tracking-tight">Your Links</h2>
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 hover:-translate-y-0.5"
-        >
-          <FaPlus className="w-4 h-4" />
-          <span>Create New Link</span>
-        </Link>
-      </div>
-
       <div className="rounded-xl shadow-lg border border-border overflow-hidden bg-background">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-border">
@@ -143,6 +171,20 @@ export function LinksList({ urls }: LinksListProps) {
                   </td>
                   <td className="px-6 py-5 whitespace-nowrap text-center">
                     <div className="flex justify-center gap-4">
+                      <Link
+                        href={`/dashboard/analytics/${url.slug}`}
+                        className="text-indigo-500 hover:text-indigo-600 transition-colors p-1.5 hover:bg-indigo-500/10 rounded-md"
+                        title="View Analytics"
+                      >
+                        <FaChartBar className="w-4 h-4" />
+                      </Link>
+                      <button
+                        onClick={() => setShowQRCode(url.slug)}
+                        className="text-primary hover:text-primary-hover transition-colors p-1.5 hover:bg-primary/10 rounded-md"
+                        title="Show QR Code"
+                      >
+                        <FaQrcode className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => copyToClipboard(url.slug)}
                         className="text-primary hover:text-primary-hover transition-colors p-1.5 hover:bg-primary/10 rounded-md"
@@ -172,6 +214,51 @@ export function LinksList({ urls }: LinksListProps) {
           </table>
         </div>
       </div>
+
+      {/* QR Code Modal */}
+      {showQRCode && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">QR Code</h3>
+              <button
+                onClick={() => setShowQRCode(null)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex flex-col items-center gap-4">
+              <div
+                className="p-4 bg-white rounded-lg"
+                id={`qr-code-${showQRCode}`}
+              >
+                <QRCodeSVG
+                  value={`${window.location.origin}/${showQRCode}`}
+                  size={200}
+                  level="H"
+                  includeMargin={true}
+                  className="rounded-lg"
+                />
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Scan to visit:
+                </p>
+                <p className="text-sm font-medium break-all max-w-[280px]">
+                  {window.location.origin}/{showQRCode}
+                </p>
+              </div>
+              <button
+                onClick={() => downloadQRCode(showQRCode)}
+                className="text-sm text-primary hover:underline"
+              >
+                Download QR Code
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

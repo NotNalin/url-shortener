@@ -20,10 +20,18 @@ export function PasswordPrompt({ urlId, slug }: PasswordPromptProps) {
     setIsSubmitting(true);
 
     try {
+      // Get the original referrer
+      const originalReferrer = document.referrer;
+
       const result = await verifyUrlPassword(urlId, password);
 
       if (result.success && result.originalUrl) {
-        window.location.href = result.originalUrl;
+        // Append the original referrer to the URL if it exists
+        const redirectUrl = new URL(result.originalUrl);
+        if (originalReferrer) {
+          redirectUrl.searchParams.set("original_referrer", originalReferrer);
+        }
+        window.location.href = redirectUrl.toString();
       } else {
         setError("Incorrect password");
       }
@@ -50,6 +58,13 @@ export function PasswordPrompt({ urlId, slug }: PasswordPromptProps) {
       </p>
       <p className="mb-6 text-center text-muted-foreground">
         This link is protected. Please enter the passphrase to continue.
+      </p>
+      <p className="mb-4 text-center text-sm text-muted-foreground">
+        You can also access this link by adding{" "}
+        <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+          ?key=your_password
+        </code>{" "}
+        to the URL.
       </p>
 
       <form onSubmit={handleSubmit}>

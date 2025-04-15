@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaChevronDown } from "react-icons/fa6";
 import { FaEyeSlash, FaEye } from "react-icons/fa";
+import { QRCodeSVG } from "qrcode.react";
 
 interface CreateLinkFormProps {
   isLoggedIn: boolean;
@@ -259,22 +260,90 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
           <h3 className="font-medium text-green-800 dark:text-green-400 mb-2">
             URL shortened successfully!
           </h3>
-          <div className="flex items-center">
-            <input
-              type="text"
-              className="flex-1 px-3 py-2 border rounded-l-md"
-              value={result.shortUrl}
-              readOnly
-            />
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(result.shortUrl);
-                alert("Copied to clipboard!");
-              }}
-              className="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-r-md hover:bg-gray-300 dark:hover:bg-gray-600"
-            >
-              Copy
-            </button>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center">
+              <input
+                type="text"
+                className="flex-1 px-3 py-2 border rounded-l-md"
+                value={result.shortUrl}
+                readOnly
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(result.shortUrl);
+                  alert("Copied to clipboard!");
+                }}
+                className="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-r-md hover:bg-gray-300 dark:hover:bg-gray-600"
+              >
+                Copy
+              </button>
+            </div>
+
+            {/* QR Code Section */}
+            <div className="flex flex-col items-center gap-2 p-4 bg-white dark:bg-gray-800 rounded-md border border-border">
+              <h4 className="text-sm font-medium">QR Code</h4>
+              <div className="p-2 bg-white rounded-md">
+                <QRCodeSVG
+                  value={result.shortUrl}
+                  size={128}
+                  level="H"
+                  includeMargin={true}
+                  className="rounded-md"
+                />
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-1">
+                  Scan to visit:
+                </p>
+                <p className="text-sm font-medium break-all max-w-[240px]">
+                  {result.shortUrl}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  // Create a temporary link to download the QR code
+                  const svg = document.querySelector(".qr-code svg");
+                  if (svg) {
+                    const svgData = new XMLSerializer().serializeToString(svg);
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+                    const img = new Image();
+                    img.onload = () => {
+                      // Set canvas size to accommodate QR code and text
+                      canvas.width = img.width;
+                      canvas.height = img.height + 40; // Extra space for text
+
+                      // Draw white background
+                      ctx!.fillStyle = "white";
+                      ctx!.fillRect(0, 0, canvas.width, canvas.height);
+
+                      // Draw QR code
+                      ctx!.drawImage(img, 0, 0);
+
+                      // Add text
+                      ctx!.font = "14px Arial";
+                      ctx!.fillStyle = "black";
+                      ctx!.textAlign = "center";
+                      ctx!.fillText(
+                        result.shortUrl,
+                        canvas.width / 2,
+                        img.height + 20,
+                      );
+
+                      const pngFile = canvas.toDataURL("image/png");
+                      const downloadLink = document.createElement("a");
+                      downloadLink.download = `qr-code-${result.slug}.png`;
+                      downloadLink.href = pngFile;
+                      downloadLink.click();
+                    };
+                    img.src = "data:image/svg+xml;base64," + btoa(svgData);
+                  }
+                }}
+                className="text-sm text-primary hover:underline"
+              >
+                Download QR Code
+              </button>
+            </div>
           </div>
         </div>
       )}

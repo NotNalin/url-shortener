@@ -1,4 +1,4 @@
-import { CreateLinkForm } from "../components/CreateLinkForm";
+import { CreateLinkForm } from "@/components/CreateLinkForm";
 import { auth } from "@clerk/nextjs/server";
 
 export default async function Home() {
@@ -6,15 +6,14 @@ export default async function Home() {
   const isLoggedIn = !!userId;
 
   return (
-    <section>
-      <div className="max-w-2xl mb-8">
-        <h1 className="text-3xl font-bold mb-4">Simplify Your Links</h1>
-        <p className="text-lg text-muted-foreground">
-          Transform long URLs into short, powerful links. Get started for free,
-          or unlock premium features by signing in.
+    <div className="space-y-8">
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-bold">URL Shortener</h1>
+        <p className="text-muted-foreground">
+          Create short, memorable links with analytics and password protection
         </p>
       </div>
       <CreateLinkForm isLoggedIn={isLoggedIn} />
-    </section>
+    </div>
   );
 }
