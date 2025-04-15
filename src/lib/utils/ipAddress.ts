@@ -52,7 +52,7 @@ export async function getClientIP(): Promise<string> {
       }
     }
     return "127.0.0.1";
-  } catch (error) {
+  } catch {
     return "127.0.0.1";
   }
 }

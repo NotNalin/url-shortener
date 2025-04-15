@@ -36,27 +36,27 @@ export function parseUserAgent(userAgent: string): UserAgentData {
   if (!userAgent) {
     return {
       browser: {
-        name: 'Unknown',
-        version: '',
-        major: '',
-        type: ''
+        name: "Unknown",
+        version: "",
+        major: "",
+        type: "",
       },
       cpu: {
-        architecture: ''
+        architecture: "",
       },
       device: {
-        vendor: '',
-        model: '',
-        type: 'Desktop'
+        vendor: "",
+        model: "",
+        type: "Desktop",
       },
       engine: {
-        name: '',
-        version: ''
+        name: "",
+        version: "",
       },
       os: {
-        name: 'Unknown',
-        version: ''
-      }
+        name: "Unknown",
+        version: "",
+      },
     };
   }
 
@@ -67,26 +67,26 @@ export function parseUserAgent(userAgent: string): UserAgentData {
   // Map the parser results to our interface
   return {
     browser: {
-      name: result.browser.name || 'Unknown',
-      version: result.browser.version || '',
-      major: result.browser.major || '',
-      type: result.browser.type || ''
+      name: result.browser.name || "Unknown",
+      version: result.browser.version || "",
+      major: result.browser.major || "",
+      type: result.browser.type || "",
     },
     cpu: {
-      architecture: result.cpu.architecture || ''
+      architecture: result.cpu.architecture || "",
     },
     device: {
-      vendor: result.device.vendor || '',
-      model: result.device.model || '',
-      type: result.device.type || 'Desktop'
+      vendor: result.device.vendor || "",
+      model: result.device.model || "",
+      type: result.device.type || "Desktop",
     },
     engine: {
-      name: result.engine.name || '',
-      version: result.engine.version || ''
+      name: result.engine.name || "",
+      version: result.engine.version || "",
     },
     os: {
-      name: result.os.name || 'Unknown',
-      version: result.os.version || ''
-    }
+      name: result.os.name || "Unknown",
+      version: result.os.version || "",
+    },
   };
 }

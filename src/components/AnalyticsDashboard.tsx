@@ -206,7 +206,6 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
     );
   };
 
-
   // Recent clicks data
   const recentClicksData = analytics.recentClicks.map(
     (click: RecentClickData, i: number) => {

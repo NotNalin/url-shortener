@@ -13,10 +13,8 @@ import { UrlDocument } from "@/lib/types";
 import { createHash } from "crypto";
 
 interface RedirectPageProps {
-  params: {
-    slug: string;
-  };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 /**
@@ -118,21 +116,17 @@ export default async function RedirectPage({
 
   // If password protected, check for key parameter
   if (url.passwordHash) {
-
-
     // Get search params asynchronously
     const params = await searchParams;
 
     // Access key from awaited params
     const key = params.key as string;
 
-
     if (key) {
       // Verify password from URL parameter
       const result = await verifyUrlPassword(url._id.toString(), key);
 
       if (result.success) {
-
         // Only record analytics if they weren't already recorded by verifyUrlPassword
         if (!("analyticsRecorded" in result) || !result.analyticsRecorded) {
           await recordAnalytics(url, slug);

@@ -19,7 +19,7 @@ import { createHash } from "crypto";
 
 // Create shortened URL
 export async function createShortUrl(
-  formData: FormData
+  formData: FormData,
 ): Promise<CreateUrlResponse> {
   const originalUrl = formData.get("url") as string;
   const customSlug = formData.get("customSlug") as string;
@@ -153,7 +153,7 @@ export async function deleteUrl(id: string) {
 // Verify password for protected URLs
 export async function verifyUrlPassword(
   urlId: string,
-  password: string
+  password: string,
 ): Promise<VerifyPasswordResponse> {
   await connectToDatabase();
 
@@ -162,7 +162,7 @@ export async function verifyUrlPassword(
 
     if (!url || !url.passwordHash) {
       console.log(
-        `[verifyUrlPassword] No URL found or no password hash for ID: ${urlId}`
+        `[verifyUrlPassword] No URL found or no password hash for ID: ${urlId}`,
       );
       return { success: false };
     }
@@ -201,7 +201,7 @@ export async function verifyUrlPassword(
 async function recordPasswordProtectedVisit(url: UrlDocument) {
   try {
     console.log(
-      `[recordPasswordProtectedVisit] Recording analytics for slug: ${url.slug}`
+      `[recordPasswordProtectedVisit] Recording analytics for slug: ${url.slug}`,
     );
 
     // Ensure database connection is established
@@ -227,7 +227,7 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
     } catch (error) {
       console.error(
         "[recordPasswordProtectedVisit] Invalid URL from headers:",
-        error
+        error,
       );
     }
 
@@ -244,7 +244,7 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
     } catch (locError) {
       console.error(
         `[recordPasswordProtectedVisit] Error getting location:`,
-        locError
+        locError,
       );
       locationData = { country: "Unknown", region: "Unknown", isp: "Unknown" };
     }
@@ -269,7 +269,7 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
     // Validate url ID
     if (!url._id) {
       console.error(
-        `[recordPasswordProtectedVisit] Missing URL ID for slug: ${url.slug}`
+        `[recordPasswordProtectedVisit] Missing URL ID for slug: ${url.slug}`,
       );
       return false;
     }
@@ -309,12 +309,12 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
       timestamp: new Date(),
     };
 
-    const analyticsEntry = await Analytics.create(analyticsRecord);
+    await Analytics.create(analyticsRecord);
     return true;
   } catch (error) {
     console.error(
       `[recordPasswordProtectedVisit] Error recording analytics for slug: ${url.slug}:`,
-      error
+      error,
     );
     return false;
   }

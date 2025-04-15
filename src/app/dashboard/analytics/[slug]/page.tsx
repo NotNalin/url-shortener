@@ -6,9 +6,7 @@ import Link from "next/link";
 import { UrlDocument } from "@/lib/types";
 
 interface AnalyticsPageProps {
-  params: {
-    slug: string;
-  };
+  params: Promise<{ slug: string }>;
 }
 
 /**

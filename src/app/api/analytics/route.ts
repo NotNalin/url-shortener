@@ -37,7 +37,7 @@ setInterval(() => {
  */
 function calculateDateRange(
   timeRange: TimeRange,
-  urlCreationDate: Date
+  urlCreationDate: Date,
 ): DateRange {
   const endDate = new Date(); // Current date and time
   const startDate = new Date(); // Start with current date
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
 
     // Unique visitors (distinct visitorIds)
     const uniqueVisitors = await Analytics.distinct("visitorId", query).then(
-      (ids) => ids.length
+      (ids) => ids.length,
     );
 
     // Get total views from URL record
@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
       urlId,
       startDate,
       endDate,
-      timeRange
+      timeRange,
     );
 
     // Location data
@@ -164,7 +164,7 @@ export async function GET(request: NextRequest) {
       .sort({ timestamp: -1 })
       .limit(5)
       .select(
-        "timestamp location.country userAgent.browser.name userAgent.os.name userAgent.device.type referer"
+        "timestamp location.country userAgent.browser.name userAgent.os.name userAgent.device.type referer",
       )
       .lean();
 
@@ -188,8 +188,8 @@ export async function GET(request: NextRequest) {
           !click.referer || click.referer === ""
             ? "Direct"
             : click.referer.includes("dashboard/analytics")
-            ? "Password Protected Link"
-            : click.referer,
+              ? "Password Protected Link"
+              : click.referer,
       })),
     };
 
@@ -207,7 +207,7 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json(
       { error: "Failed to fetch analytics" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -219,7 +219,7 @@ async function generateTimeSeriesData(
   urlId: string,
   startDate: Date,
   endDate: Date,
-  timeRange: TimeRange
+  timeRange: TimeRange,
 ) {
   // Format for grouping based on time range
   let format = "%Y-%m-%d"; // Default to daily
@@ -274,39 +274,39 @@ async function generateTimeSeriesData(
  */
 async function getTopMetrics(
   query: { urlId: string; timestamp: { $gte: Date; $lte: Date } },
-  field: string
+  field: string,
 ): Promise<Array<{ name: string; count: number; percentage: number }>> {
   // Handle special cases for userAgent fields
   const groupField = field.startsWith("userAgent.")
     ? `$${field}`
     : field === "referer"
-    ? {
-        $cond: {
-          if: { $eq: ["$referer", ""] },
-          then: "Direct",
-          else: {
-            $cond: {
-              if: {
-                $regexMatch: { input: "$referer", regex: "^https?://[^/]+$" },
-              },
-              then: "$referer",
-              else: {
-                $cond: {
-                  if: {
-                    $regexMatch: {
-                      input: "$referer",
-                      regex: "^/dashboard/analytics/",
+      ? {
+          $cond: {
+            if: { $eq: ["$referer", ""] },
+            then: "Direct",
+            else: {
+              $cond: {
+                if: {
+                  $regexMatch: { input: "$referer", regex: "^https?://[^/]+$" },
+                },
+                then: "$referer",
+                else: {
+                  $cond: {
+                    if: {
+                      $regexMatch: {
+                        input: "$referer",
+                        regex: "^/dashboard/analytics/",
+                      },
                     },
+                    then: "Password Protected Link",
+                    else: "$referer",
                   },
-                  then: "Password Protected Link",
-                  else: "$referer",
                 },
               },
             },
           },
-        },
-      }
-    : `$${field}`;
+        }
+      : `$${field}`;
 
   const pipeline: PipelineStage[] = [
     {
