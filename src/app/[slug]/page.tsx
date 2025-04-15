@@ -58,10 +58,6 @@ async function recordAnalytics(url: UrlDocument, slug: string) {
       location: locationData,
       timestamp: new Date(),
     });
-
-    console.log(
-      `[recordAnalytics] Successfully recorded analytics with ID: ${analyticsEntry._id}`,
-    );
     return true;
   } catch (error) {
     console.error(`[recordAnalytics] Error recording analytics:`, error);

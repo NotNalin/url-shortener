@@ -161,17 +161,12 @@ export async function verifyUrlPassword(
     const url = await Url.findById(urlId);
 
     if (!url || !url.passwordHash) {
-      console.log(
-        `[verifyUrlPassword] No URL found or no password hash for ID: ${urlId}`,
-      );
       return { success: false };
     }
 
     const passwordMatches = await bcrypt.compare(password, url.passwordHash);
 
     if (passwordMatches) {
-      console.log(`[verifyUrlPassword] Password verified for URL: ${url.slug}`);
-
       // Increment click count only after successful password verification
       await Url.findByIdAndUpdate(urlId, { $inc: { currentClicks: 1 } });
 
@@ -186,8 +181,6 @@ export async function verifyUrlPassword(
         analyticsRecorded: true,
       };
     }
-
-    console.log(`[verifyUrlPassword] Incorrect password for URL: ${url.slug}`);
     return { success: false };
   } catch (error) {
     console.error("Error verifying password:", error);
@@ -200,10 +193,6 @@ export async function verifyUrlPassword(
  */
 async function recordPasswordProtectedVisit(url: UrlDocument) {
   try {
-    console.log(
-      `[recordPasswordProtectedVisit] Recording analytics for slug: ${url.slug}`,
-    );
-
     // Ensure database connection is established
     await connectToDatabase();
 
@@ -286,7 +275,7 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
           name: userAgentData.browser.name,
           version: userAgentData.browser.version,
           major: userAgentData.browser.major,
-          type: userAgentData.browser.type,
+          browserType: userAgentData.browser.browserType,
         },
         cpu: {
           architecture: userAgentData.cpu.architecture,
@@ -294,7 +283,7 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
         device: {
           vendor: userAgentData.device.vendor,
           model: userAgentData.device.model,
-          type: userAgentData.device.type,
+          deviceType: userAgentData.device.deviceType,
         },
         engine: {
           name: userAgentData.engine.name,

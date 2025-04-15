@@ -7,18 +7,7 @@ import { headers } from "next/headers";
 export async function getClientIP(): Promise<string> {
   try {
     const headersList = await headers();
-
-    // Log the available headers for debugging
-    console.log(
-      "[getClientIP] Available headers:",
-      Array.from(headersList.entries())
-        .map(
-          ([key, value]) =>
-            `${key}: ${value.substring(0, 20)}${value.length > 20 ? "..." : ""}`,
-        )
-        .join(", "),
-    );
-
+    
     // Use type assertion to work around possible typing issues
     const h = headersList as unknown as { get(name: string): string | null };
 

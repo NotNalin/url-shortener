@@ -5,7 +5,7 @@ export interface UserAgentData {
     name: string;
     version: string;
     major: string;
-    type: string;
+    browserType: string;
   };
   cpu: {
     architecture: string;
@@ -13,7 +13,7 @@ export interface UserAgentData {
   device: {
     vendor: string;
     model: string;
-    type: string;
+    deviceType: string;
   };
   engine: {
     name: string;
@@ -39,7 +39,7 @@ export function parseUserAgent(userAgent: string): UserAgentData {
         name: "Unknown",
         version: "",
         major: "",
-        type: "",
+        browserType: "",
       },
       cpu: {
         architecture: "",
@@ -47,7 +47,7 @@ export function parseUserAgent(userAgent: string): UserAgentData {
       device: {
         vendor: "",
         model: "",
-        type: "Desktop",
+        deviceType: "Desktop",
       },
       engine: {
         name: "",
@@ -70,7 +70,7 @@ export function parseUserAgent(userAgent: string): UserAgentData {
       name: result.browser.name || "Unknown",
       version: result.browser.version || "",
       major: result.browser.major || "",
-      type: result.browser.type || "",
+      browserType: result.browser.type || "",
     },
     cpu: {
       architecture: result.cpu.architecture || "",
@@ -78,7 +78,7 @@ export function parseUserAgent(userAgent: string): UserAgentData {
     device: {
       vendor: result.device.vendor || "",
       model: result.device.model || "",
-      type: result.device.type || "Desktop",
+      deviceType: result.device.type || "Desktop",
     },
     engine: {
       name: result.engine.name || "",
