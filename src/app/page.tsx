@@ -6,7 +6,7 @@ export default async function Home() {
   const isLoggedIn = !!userId;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 flex flex-col items-center justify-center">
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold">URL Shortener</h1>
         <p className="text-muted-foreground">

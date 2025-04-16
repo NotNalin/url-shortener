@@ -97,7 +97,7 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
   }
 
   return (
-    <div className="p-4 sm:p-6 rounded-lg shadow-md border border-border bg-card">
+    <div className="p-4 sm:p-6 rounded-lg shadow-md border border-border bg-card lg:w-125">
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label
@@ -318,7 +318,7 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
                 <div className="p-2 bg-white rounded-md">
                   <QRCodeSVG
                     value={result.shortUrl}
-                    size={160}
+                    size={250}
                     level="H"
                     includeMargin={true}
                     className="rounded-md"
