@@ -25,16 +25,27 @@ async function recordAnalytics(url: UrlDocument, slug: string) {
     const headersList = await headers();
     const userAgent = headersList.get("user-agent") || "";
     const referer = headersList.get("referer") || "";
-    const requestUrl = new URL(headersList.get("url") || "");
 
-    // Check for original_referrer parameter
-    const originalReferrer = requestUrl.searchParams.get("original_referrer");
+    // Safely handle URL parsing
+    let requestUrl: URL | null = null;
+    let originalReferrer = "";
+
+    try {
+      const urlString = headersList.get("url") || "";
+      if (urlString) {
+        requestUrl = new URL(urlString);
+        originalReferrer =
+          requestUrl.searchParams.get("original_referrer") || "";
+      }
+    } catch (error) {
+      console.error(`[recordAnalytics] Invalid URL from headers:`, error);
+    }
+
     let effectiveReferrer = originalReferrer || referer;
     if (
       effectiveReferrer?.startsWith("https://localhost") ||
-      effectiveReferrer?.startsWith(
-        `https://${window.location.hostname}/${slug}`,
-      )
+      (requestUrl &&
+        effectiveReferrer?.startsWith(`https://${requestUrl.hostname}/${slug}`))
     ) {
       effectiveReferrer = "";
     }
@@ -143,7 +154,6 @@ export default async function RedirectPage({
         return redirect(url.originalUrl);
       } else {
       }
-    } else {
     }
 
     // Show password prompt if no key or verification failed
@@ -157,12 +167,11 @@ export default async function RedirectPage({
 
     // Increment click count - separated operation for reliability
     await Url.findByIdAndUpdate(url._id, { $inc: { currentClicks: 1 } });
-
-    // Redirect to the original URL
-    redirect(url.originalUrl);
   } catch (error) {
     console.error("[RedirectPage] Error processing redirect:", error);
     // Still redirect even if analytics or click tracking fails
-    redirect(url.originalUrl);
   }
+
+  // Redirect to the original URL
+  redirect(url.originalUrl);
 }
