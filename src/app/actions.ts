@@ -224,9 +224,9 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
     let effectiveReferrer = originalReferrer || referer;
     if (
       effectiveReferrer?.startsWith("https://localhost") ||
-      effectiveReferrer?.startsWith(
-        `https://${window.location.hostname}/${url.slug}`,
-      )
+      (requestUrl && effectiveReferrer?.startsWith(
+        `https://${requestUrl.hostname}/${url.slug}`,
+      ))
     ) {
       effectiveReferrer = "";
     }
