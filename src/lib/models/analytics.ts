@@ -37,6 +37,7 @@ export interface AnalyticsDocument extends Document {
   location: {
     country: string;
     region: string;
+    city: string;
     isp: string;
   };
 }
@@ -104,6 +105,7 @@ const analyticsSchema = new Schema({
   location: {
     country: { type: String },
     region: { type: String },
+    city: { type: String },
     isp: { type: String },
   },
 });

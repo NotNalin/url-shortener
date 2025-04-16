@@ -54,6 +54,12 @@ export interface RegionData {
   percentage: number;
 }
 
+export interface CityData {
+  name: string;
+  count: number;
+  percentage: number;
+}
+
 export interface RefererData {
   name: string;
   count: number;

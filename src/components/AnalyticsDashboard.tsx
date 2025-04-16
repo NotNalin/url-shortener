@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AnalyticsData, RecentClickData } from "@/lib/types";
+import { AnalyticsData, RecentClickData, UrlDocument } from "@/lib/types";
 import {
   FaChartBar,
   FaLink,
@@ -21,6 +21,12 @@ import {
   FaInternetExplorer,
   FaOpera,
   FaGlobe,
+  FaTv,
+  FaKey,
+  FaCopy,
+  FaSearch,
+  FaMapMarkerAlt,
+  FaQrcode,
 } from "react-icons/fa";
 import {
   ResponsiveContainer,
@@ -33,14 +39,12 @@ import {
   Legend,
 } from "recharts";
 import dynamic from "next/dynamic";
+import { MdAssistant, MdWatch } from "react-icons/md";
+import { IoGameController } from "react-icons/io5";
+import { QRCodeSVG } from "qrcode.react";
 
 // Add CSS variables for chart colors that work in both light and dark mode
 const chartStyles = {
-  "--chart-primary": "var(--primary, #10b981)",
-  "--chart-blue": "var(--blue, #3b82f6)",
-  "--chart-amber": "var(--amber, #f59e0b)",
-  "--chart-purple": "var(--purple, #8b5cf6)",
-  "--chart-red": "var(--red, #ef4444)",
   "--chart-visits": "var(--orange, #f97316)",
   "--chart-visitors": "var(--cyan, #06b6d4)",
 } as React.CSSProperties;
@@ -57,18 +61,39 @@ const ClientWorldMap = dynamic(() => import("./ClientWorldMap"), {
 
 interface AnalyticsDashboardProps {
   slug: string;
+  urlDetails: UrlDocument;
 }
 
 /**
  * Dashboard to display URL analytics data
  */
-export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
+export default function AnalyticsDashboard({
+  slug,
+  urlDetails,
+}: AnalyticsDashboardProps) {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState("7d");
   const [activeLocationTab, setActiveLocationTab] = useState("country");
   const [activeDeviceTab, setActiveDeviceTab] = useState("device");
+  const [copied, setCopied] = useState<string | null>(null);
+  const [shortUrl, setShortUrl] = useState(`/${slug}`);
+  const [showQRCode, setShowQRCode] = useState(false);
+
+  // Add copy to clipboard function
+  function copyToClipboard(text: string, type: string) {
+    navigator.clipboard.writeText(text);
+    setCopied(type);
+    setTimeout(() => setCopied(null), 2000);
+  }
+
+  // Set the full URL on the client side
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setShortUrl(`${window.location.origin}/${slug}`);
+    }
+  }, [slug]);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -94,6 +119,42 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
 
     fetchAnalytics();
   }, [slug, timeRange]);
+
+  // Add download QR code function from LinksList.tsx
+  function downloadQRCode() {
+    const svg = document.querySelector(`#qr-code-${slug} svg`);
+    if (svg) {
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+      img.onload = () => {
+        // Set canvas size to accommodate QR code and text
+        canvas.width = img.width;
+        canvas.height = img.height + 40; // Extra space for text
+
+        // Draw white background
+        ctx!.fillStyle = "white";
+        ctx!.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw QR code
+        ctx!.drawImage(img, 0, 0);
+
+        // Add text
+        ctx!.font = "14px Arial";
+        ctx!.fillStyle = "black";
+        ctx!.textAlign = "center";
+        ctx!.fillText(shortUrl, canvas.width / 2, img.height + 20);
+
+        const pngFile = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        downloadLink.download = `qr-code-${slug}.png`;
+        downloadLink.href = pngFile;
+        downloadLink.click();
+      };
+      img.src = "data:image/svg+xml;base64," + btoa(svgData);
+    }
+  }
 
   if (loading) {
     return (
@@ -181,7 +242,7 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
 
   // Format referrer for display
   const formatReferrer = (referrer: string) => {
-    if (!referrer || referrer === "Direct") return "Direct";
+    if (!referrer || referrer === "Direct") return "Direct Traffic";
     try {
       const url = new URL(referrer);
       return url.hostname;
@@ -193,17 +254,7 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
   // Format device names for better display
   const formatDeviceName = (name: string) => {
     if (!name) return "Unknown";
-    const deviceMap: Record<string, string> = {
-      desktop: "Desktop",
-      mobile: "Mobile",
-      tablet: "Tablet",
-      smartphone: "Smartphone",
-      unknown: "Unknown",
-    };
-    return (
-      deviceMap[name.toLowerCase()] ||
-      name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
-    );
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
   };
 
   // Recent clicks data
@@ -217,8 +268,7 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
         country: click.country,
         browser: click.browser,
         os: click.os,
-        referrer:
-          click.referer === "Direct" ? "Direct" : formatReferrer(click.referer),
+        referrer: formatReferrer(click.referer),
       };
     },
   );
@@ -231,6 +281,14 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
       return <FaMobileAlt className="inline mr-2 text-green-400" />;
     if (deviceName.includes("tablet"))
       return <FaTabletAlt className="inline mr-2 text-purple-400" />;
+    if (deviceName.includes("smarttv"))
+      return <FaTv className="inline mr-2 text-purple-400" />;
+    if (deviceName.includes("console"))
+      return <IoGameController className="inline mr-2 text-purple-400" />;
+    if (deviceName.includes("wearable"))
+      return <MdWatch className="inline mr-2 text-purple-400" />;
+    if (deviceName.includes("embedded"))
+      return <MdAssistant className="inline mr-2 text-purple-400" />;
     return <FaDesktop className="inline mr-2 text-gray-400" />;
   };
 
@@ -271,13 +329,193 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
       {/* Date Range Selector */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <h2 className="text-xl font-bold flex items-center">
-          <span className="mr-2">/{slug}</span>
-          <span className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full">
-            Analytics
+          <span className="mr-2">
+            Analytics for <span className="text-primary">/{slug}</span>
           </span>
         </h2>
         <DateRangePicker currentRange={timeRange} onChange={setTimeRange} />
       </div>
+
+      {/* URL Details Card */}
+      <div className="bg-card border border-border rounded-xl shadow-sm p-4 sm:p-6 mb-6">
+        <h3 className="text-lg sm:text-xl font-bold mb-4 flex items-center">
+          <FaLink className="w-4 h-4 mr-2 text-primary" />
+          URL Details
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-1 col-span-1 md:col-span-2">
+            <p className="text-sm text-muted-foreground">Original URL</p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium" title={urlDetails.originalUrl}>
+                {urlDetails.originalUrl}
+              </p>
+              <button
+                onClick={() =>
+                  copyToClipboard(urlDetails.originalUrl, "original")
+                }
+                className={`p-1 rounded transition-colors ${
+                  copied === "original"
+                    ? "text-green-500 bg-green-50 dark:bg-green-900/20"
+                    : "text-primary hover:text-primary-hover hover:bg-primary/10"
+                }`}
+                title="Copy URL"
+              >
+                {copied === "original" ? (
+                  <span className="flex items-center gap-1">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                    <span className="text-xs">Copied</span>
+                  </span>
+                ) : (
+                  <FaCopy className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Created At</p>
+            <p className="font-medium">
+              {new Date(urlDetails.createdAt).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Total Clicks</p>
+            <p className="font-medium">
+              {urlDetails.currentClicks.toLocaleString()}
+              {urlDetails.maxClicks && (
+                <span className="text-muted-foreground">
+                  {` / ${urlDetails.maxClicks.toLocaleString()}`}
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="space-y-1 col-span-1 md:col-span-2">
+            <p className="text-sm text-muted-foreground">Shortened URL</p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium">{shortUrl}</p>
+              <button
+                onClick={() => copyToClipboard(shortUrl, "short")}
+                className={`p-1 rounded transition-colors ${
+                  copied === "short"
+                    ? "text-green-500 bg-green-50 dark:bg-green-900/20"
+                    : "text-primary hover:text-primary-hover hover:bg-primary/10"
+                }`}
+                title="Copy Short URL"
+              >
+                {copied === "short" ? (
+                  <span className="flex items-center gap-1">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                    <span className="text-xs">Copied</span>
+                  </span>
+                ) : (
+                  <FaCopy className="w-4 h-4" />
+                )}
+              </button>
+              <button
+                onClick={() => setShowQRCode(true)}
+                className="p-1 rounded transition-colors text-primary hover:text-primary-hover hover:bg-primary/10"
+                title="Show QR Code"
+              >
+                <FaQrcode className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          <div className="space-y-1 col-span-1 md:col-span-2">
+            <p className="text-sm text-muted-foreground">Features</p>
+            <div className="flex flex-wrap gap-2">
+              {urlDetails.passwordHash && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full ring-1 ring-inset ring-blue-400/30 dark:ring-blue-400/20">
+                  <FaKey className="w-3 h-3" />
+                  Password Protected
+                </span>
+              )}
+              {urlDetails.expiresAt && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full ring-1 ring-inset ring-purple-400/30 dark:ring-purple-400/20">
+                  <FaClock className="w-3 h-3" />
+                  Expires: {new Date(urlDetails.expiresAt).toLocaleDateString()}
+                </span>
+              )}
+              {urlDetails.maxClicks && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 rounded-full ring-1 ring-inset ring-green-400/30 dark:ring-green-400/20">
+                  <FaMousePointer className="w-3 h-3" />
+                  Max Clicks: {urlDetails.maxClicks}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* QR Code Modal */}
+      {showQRCode && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">QR Code</h3>
+              <button
+                onClick={() => setShowQRCode(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex flex-col items-center gap-4">
+              <div className="p-4 bg-white rounded-lg" id={`qr-code-${slug}`}>
+                <QRCodeSVG
+                  value={shortUrl}
+                  size={200}
+                  level="H"
+                  includeMargin={true}
+                  className="rounded-lg"
+                />
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Scan to visit:
+                </p>
+                <p className="text-sm font-medium break-all max-w-[280px]">
+                  {shortUrl}
+                </p>
+              </div>
+              <button
+                onClick={downloadQRCode}
+                className="text-sm text-primary hover:underline"
+              >
+                Download QR Code
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Top Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -358,7 +596,10 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
                   <tr key={click.id} className="hover:bg-muted/5">
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="font-medium">
-                        {click.date.split("(")[0]}
+                        {click.date
+                          .replace(/\(.*$/, "")
+                          .replace(/^[^0-9]+/, "")
+                          .trim()}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {click.time}
@@ -385,15 +626,9 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {click.referrer === "Direct" ? (
-                        <span className="flex items-center text-muted-foreground">
-                          Direct Traffic
-                        </span>
-                      ) : (
-                        <span className="truncate max-w-[200px] block">
-                          {click.referrer}
-                        </span>
-                      )}
+                      <span className="truncate max-w-[200px] block">
+                        {click.referrer}
+                      </span>
                     </td>
                   </tr>
                 ),
@@ -414,54 +649,87 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
       </div>
 
       {/* Locations Section */}
-      <div className="bg-card border border-border rounded-xl shadow-sm p-4 sm:p-6 mb-6">
-        <h3 className="text-lg sm:text-xl font-bold mb-4 flex items-center">
-          <FaGlobe className="w-4 h-4 mr-2 text-blue-500" />
-          Locations
-        </h3>
+      <div className="bg-card border border-border rounded-xl shadow-md p-4 sm:p-6 mb-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-5">
+          <h3 className="text-lg sm:text-xl font-bold flex items-center mb-3 sm:mb-0">
+            <FaGlobe className="w-5 h-5 mr-2 text-blue-500" />
+            Visitor Locations
+          </h3>
 
-        <div className="flex mb-6 border-b border-border">
-          <button
-            className={`px-4 py-2 ${
-              activeLocationTab === "country"
-                ? "border-b-2 border-primary font-medium text-primary"
-                : "text-muted-foreground"
-            }`}
-            onClick={() => setActiveLocationTab("country")}
-          >
-            Country
-          </button>
-          <button
-            className={`px-4 py-2 ${
-              activeLocationTab === "region"
-                ? "border-b-2 border-primary font-medium text-primary"
-                : "text-muted-foreground"
-            }`}
-            onClick={() => setActiveLocationTab("region")}
-          >
-            Region
-          </button>
+          {/* Tab Switcher */}
+          <div className="flex bg-muted/20 dark:bg-muted/20 rounded-lg p-1 self-start">
+            <button
+              onClick={() => setActiveLocationTab("country")}
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors border ${
+                activeLocationTab === "country"
+                  ? "bg-primary text-primary-foreground border-primary shadow-md shadow-black/10 dark:shadow-white/10"
+                  : "bg-transparent text-muted-foreground border-muted-foreground/60 hover:bg-muted/40 dark:hover:bg-muted/60"
+              }`}
+            >
+              Countries
+            </button>
+            <button
+              onClick={() => setActiveLocationTab("region")}
+              className={`ml-1 px-4 py-1.5 text-sm font-medium rounded-md transition-colors border ${
+                activeLocationTab === "region"
+                  ? "bg-primary text-primary-foreground border-primary shadow-md shadow-black/10 dark:shadow-white/10"
+                  : "bg-transparent text-muted-foreground border-muted-foreground/60 hover:bg-muted/40 dark:hover:bg-muted/60"
+              }`}
+            >
+              Regions
+            </button>
+          </div>
         </div>
 
-        {/* Map and Location Data in a grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* World Map */}
-          <div className="lg:col-span-1">
-            <div className="border border-border/30 rounded-lg overflow-hidden bg-card h-[300px] sm:h-[380px]">
-              <ClientWorldMap countries={analytics.countries} />
-            </div>
+        {/* Full-width World Map */}
+        <div className="border border-border/30 rounded-lg overflow-hidden bg-card h-[320px] sm:h-[400px] mb-5">
+          <ClientWorldMap countries={analytics.countries} />
+        </div>
+
+        {/* Summary bar under map */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 px-1">
+          <div className="flex items-center mb-3 sm:mb-0">
+            <span className="text-m font-medium mr-2">
+              {activeLocationTab === "country"
+                ? `${analytics.countries.length} countries`
+                : `${analytics.regions.length} regions`}
+            </span>
+            {analytics.countries.length > 0 && (
+              <span className="text-m text-muted-foreground">
+                from {analytics.totalVisits?.toLocaleString() || 0} total visits
+              </span>
+            )}
           </div>
 
-          {/* Country/Region Table */}
-          <div className="h-[300px] sm:h-[380px] overflow-y-auto scrollbar-thin lg:col-span-1">
+          {/* Search filter - Positioned in the summary bar */}
+          <div className="flex items-center w-full sm:w-auto">
+            <div className="relative flex-grow sm:flex-grow-0 sm:w-64">
+              <input
+                type="text"
+                placeholder={`Search ${
+                  activeLocationTab === "country" ? "countries" : "regions"
+                }...`}
+                className="w-full py-1.5 px-3 pl-9 text-sm bg-muted/10 border border-border/30 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/30"
+              />
+              <FaSearch className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-2" />
+            </div>
+          </div>
+        </div>
+
+        {/* Location Data Table - Full Width */}
+        <div className="border border-border/30 rounded-lg overflow-hidden">
+          <div className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
             <table className="min-w-full">
               <thead className="bg-muted/30 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-2 text-left text-sm font-medium">
-                    Name
+                  <th className="px-4 py-3 text-left text-sm font-medium">
+                    {activeLocationTab === "country" ? "Country" : "Region"}
                   </th>
-                  <th className="px-4 py-2 text-right text-sm font-medium">
-                    Count
+                  <th className="px-4 py-3 text-right text-sm font-medium">
+                    Visitors
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-medium">
+                    Percentage
                   </th>
                 </tr>
               </thead>
@@ -469,44 +737,62 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
                 {(activeLocationTab === "country"
                   ? analytics.countries
                   : analytics.regions
-                ).map((item, index) => (
-                  <tr
-                    key={index}
-                    className="hover:bg-muted/5 transition-colors"
-                  >
-                    <td className="px-4 py-3">
-                      {activeLocationTab === "country" && (
-                        <span className="mr-2">
-                          {getCountryFlag(item.name)}
+                ).map((item, index) => {
+                  return (
+                    <tr
+                      key={index}
+                      className="hover:bg-muted/10 transition-colors"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-center">
+                          {activeLocationTab === "country" && (
+                            <span className="mr-2 text-lg">
+                              {getCountryFlag(item.name)}
+                            </span>
+                          )}
+                          <span className="font-medium">
+                            {item.name || "Unknown"}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="font-medium">
+                          {item.count.toLocaleString()}
                         </span>
-                      )}
-                      {item.name || "Unknown"}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <span className="font-medium">
-                        {item.count.toLocaleString()}
-                      </span>
-                      <span className="text-muted-foreground text-sm ml-1">
-                        ({item.percentage}%)
-                      </span>
-                      <div className="w-full bg-muted/20 h-1.5 rounded-full mt-1">
-                        <div
-                          className="bg-primary h-1.5 rounded-full"
-                          style={{ width: `${item.percentage}%` }}
-                        ></div>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end">
+                          <div className="w-full bg-muted/20 h-2.5 rounded-full overflow-hidden mt-1">
+                            <div
+                              className="bg-blue-500 h-2.5 rounded-full"
+                              style={{
+                                width: `${Math.max(
+                                  Math.min(Number(item.percentage), 100),
+                                  1,
+                                )}%`,
+                              }}
+                            ></div>
+                          </div>
+                          <span className="text-muted-foreground text-sm mr-3 w-12 text-right">
+                            {Number(item.percentage).toFixed(1)}%
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {(activeLocationTab === "country"
                   ? analytics.countries.length === 0
                   : analytics.regions.length === 0) && (
                   <tr>
-                    <td
-                      colSpan={2}
-                      className="px-4 py-8 text-center text-muted-foreground"
-                    >
-                      No location data available
+                    <td colSpan={3} className="px-4 py-12 text-center">
+                      <div className="flex flex-col items-center text-muted-foreground">
+                        <FaMapMarkerAlt className="w-8 h-8 mb-2 opacity-30" />
+                        <p>No location data available</p>
+                        <p className="text-xs mt-1">
+                          Visitor location data will appear here once collected
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -515,14 +801,13 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
           </div>
         </div>
       </div>
-
       {/* Referrers Section - Table Only */}
       <div className="bg-card border border-border rounded-xl shadow-sm p-4 sm:p-6 mb-6">
         <h3 className="text-lg sm:text-xl font-bold mb-4 flex items-center">
           <FaLink className="w-4 h-4 mr-2 text-blue-500" />
           Referrer Sources
         </h3>
-        <div className="h-64 overflow-y-auto scrollbar-thin">
+        <div className="overflow-y-auto scrollbar-thin">
           <table className="min-w-full">
             <thead className="bg-muted/30 sticky top-0 z-10">
               <tr>
@@ -532,49 +817,40 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
                 <th className="px-4 py-2 text-right text-sm font-medium">
                   Count
                 </th>
+                <th className="px-4 py-2 text-right text-sm font-medium">
+                  Percentage
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/10">
               {analytics.referers.map((referer, index) => (
                 <tr key={index} className="hover:bg-muted/5 transition-colors">
                   <td className="px-4 py-3">
-                    {referer.name === "(None)" ? (
-                      <span className="flex items-center">
-                        <span className="inline-block w-4 h-4 mr-2 bg-blue-400/20 text-blue-400 rounded-full flex items-center justify-center">
-                          <FaLink className="w-2 h-2" />
-                        </span>
-                        Direct Traffic
-                      </span>
-                    ) : (
-                      <a
-                        href={
-                          referer.name.startsWith("http")
-                            ? referer.name
-                            : `https://${referer.name}`
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-primary truncate max-w-xs flex items-center"
-                      >
-                        <span className="inline-block w-4 h-4 mr-2 bg-blue-500/20 text-blue-500 rounded-full flex items-center justify-center">
-                          <FaLink className="w-2 h-2" />
-                        </span>
-                        {referer.name}
-                      </a>
-                    )}
+                    <span className="flex items-center">
+                      {formatReferrer(referer.name)}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <span className="font-medium">
                       {referer.count.toLocaleString()}
                     </span>
-                    <span className="text-muted-foreground text-sm ml-1">
-                      ({referer.percentage}%)
-                    </span>
-                    <div className="w-full bg-muted/20 h-1.5 rounded-full mt-1">
-                      <div
-                        className="bg-blue-500 h-1.5 rounded-full"
-                        style={{ width: `${referer.percentage}%` }}
-                      ></div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end">
+                      <div className="w-full bg-muted/20 h-2.5 rounded-full overflow-hidden mt-1">
+                        <div
+                          className="bg-blue-500 h-2.5 rounded-full"
+                          style={{
+                            width: `${Math.max(
+                              Math.min(Number(referer.percentage), 100),
+                              1,
+                            )}%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-muted-foreground text-sm mr-3 w-12 text-right">
+                        {Number(referer.percentage).toFixed(1)}%
+                      </span>
                     </div>
                   </td>
                 </tr>
@@ -582,7 +858,7 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
               {analytics.referers.length === 0 && (
                 <tr>
                   <td
-                    colSpan={2}
+                    colSpan={3}
                     className="px-4 py-8 text-center text-muted-foreground"
                   >
                     No referrer data available
@@ -649,12 +925,13 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
                     )}
                   </span>
                   <span className="font-semibold">
-                    {item.count.toLocaleString()} ({item.percentage}%)
+                    {item.count.toLocaleString()} (
+                    {Number(item.percentage).toFixed(1)}%)
                   </span>
                 </div>
-                <div className="w-full bg-muted/20 h-1.5 rounded-full">
+                <div className="w-full bg-muted/20 h-2.5 rounded-full overflow-hidden">
                   <div
-                    className={`h-1.5 rounded-full ${
+                    className={`h-2.5 rounded-full ${
                       activeDeviceTab === "device"
                         ? item.name.toLowerCase().includes("desktop")
                           ? "bg-blue-500"
@@ -672,7 +949,12 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
                                 ? "bg-green-500"
                                 : "bg-purple-500"
                     }`}
-                    style={{ width: `${item.percentage}%` }}
+                    style={{
+                      width: `${Math.max(
+                        Math.min(Number(item.percentage), 100),
+                        1,
+                      )}%`,
+                    }}
                   ></div>
                 </div>
               </div>
@@ -707,12 +989,13 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
                     {browser.name}
                   </span>
                   <span className="font-semibold">
-                    {browser.count.toLocaleString()} ({browser.percentage}%)
+                    {browser.count.toLocaleString()} (
+                    {Number(browser.percentage).toFixed(1)}%)
                   </span>
                 </div>
-                <div className="w-full bg-muted/20 h-1.5 rounded-full">
+                <div className="w-full bg-muted/20 h-2.5 rounded-full overflow-hidden">
                   <div
-                    className={`h-1.5 rounded-full ${
+                    className={`h-2.5 rounded-full ${
                       browser.name.toLowerCase().includes("chrome")
                         ? "bg-blue-500"
                         : browser.name.toLowerCase().includes("firefox")
@@ -727,7 +1010,12 @@ export default function AnalyticsDashboard({ slug }: AnalyticsDashboardProps) {
                                   ? "bg-red-500"
                                   : "bg-purple-500"
                     }`}
-                    style={{ width: `${browser.percentage}%` }}
+                    style={{
+                      width: `${Math.max(
+                        Math.min(Number(browser.percentage), 100),
+                        1,
+                      )}%`,
+                    }}
                   ></div>
                 </div>
               </div>
@@ -837,7 +1125,10 @@ function CombinedTrafficChart({
     // Hourly data for 24h view
     while (current <= endDate) {
       const hourStr = current.toISOString().slice(0, 13) + ":00:00.000Z";
-      const displayHour = `${current.getHours().toString().padStart(2, "0")}:00`;
+      const displayHour = `${current
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:00`;
       const visits = visitsMap.get(hourStr) || 0;
       chartData.push({
         date: displayHour,
@@ -895,7 +1186,10 @@ function CombinedTrafficChart({
     if (timeRange === "24h") {
       nextDate.setHours(nextDate.getHours() + 1);
       const hourStr = nextDate.toISOString().slice(0, 13) + ":00:00.000Z";
-      const displayHour = `${nextDate.getHours().toString().padStart(2, "0")}:00`;
+      const displayHour = `${nextDate
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:00`;
       completeChartData.push({
         date: displayHour,
         rawDate: hourStr,
@@ -1121,7 +1415,11 @@ function formatTooltipDate(dateStr: string, timeRange: string): string {
   // Handle hourly display for 24h
   if (timeRange === "24h" && dateStr.includes(":")) {
     const today = new Date();
-    return `${today.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}`;
+    return `${today.toLocaleDateString(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    })}`;
   }
 
   // Try to parse the date

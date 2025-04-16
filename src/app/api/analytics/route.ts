@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
 
     // Browser data
     const browsers = await getTopMetrics(query, "userAgent.browser.name");
-    const devices = await getTopMetrics(query, "userAgent.device.type");
+    const devices = await getTopMetrics(query, "userAgent.device.deviceType");
     const operatingSystems = await getTopMetrics(query, "userAgent.os.name");
 
     // Get recent clicks
@@ -164,7 +164,7 @@ export async function GET(request: NextRequest) {
       .sort({ timestamp: -1 })
       .limit(5)
       .select(
-        "timestamp location.country userAgent.browser.name userAgent.os.name userAgent.device.type referer",
+        "timestamp location.country userAgent.browser.name userAgent.os.name userAgent.device.deviceType referer",
       )
       .lean();
 

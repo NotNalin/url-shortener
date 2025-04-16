@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import Link from "next/link";
 import { UrlDocument } from "@/lib/types";
+import { FaArrowLeft } from "react-icons/fa";
 
 interface AnalyticsPageProps {
   params: Promise<{ slug: string }>;
@@ -40,12 +41,12 @@ export default async function AnalyticsPage({ params }: AnalyticsPageProps) {
       <div className="mb-6">
         <Link
           href="/dashboard"
-          className="text-blue-600 hover:underline flex items-center"
+          className="text-primary hover:underline flex items-center"
         >
-          ← Back to Dashboard
+          <FaArrowLeft className="mr-2" /> Back to Dashboard
         </Link>
       </div>
-      <AnalyticsDashboard slug={slug} />
+      <AnalyticsDashboard slug={slug} urlDetails={url} />
     </div>
   );
 }

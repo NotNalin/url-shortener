@@ -29,7 +29,15 @@ async function recordAnalytics(url: UrlDocument, slug: string) {
 
     // Check for original_referrer parameter
     const originalReferrer = requestUrl.searchParams.get("original_referrer");
-    const effectiveReferrer = originalReferrer || referer;
+    let effectiveReferrer = originalReferrer || referer;
+    if (
+      effectiveReferrer?.startsWith("https://localhost") ||
+      effectiveReferrer?.startsWith(
+        `https://${window.location.hostname}/${slug}`,
+      )
+    ) {
+      effectiveReferrer = "";
+    }
 
     // Get IP address using our utility function
     const ipAddress = await getClientIP();
@@ -48,7 +56,7 @@ async function recordAnalytics(url: UrlDocument, slug: string) {
     const userAgentData = parseUserAgent(userAgent);
 
     // Create analytics entry with location data
-    const analyticsEntry = await Analytics.create({
+    await Analytics.create({
       urlId: url._id.toString(),
       slug,
       visitorId,

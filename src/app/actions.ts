@@ -221,7 +221,15 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
     }
 
     // Use the effective referrer for analytics
-    const effectiveReferrer = originalReferrer || referer;
+    let effectiveReferrer = originalReferrer || referer;
+    if (
+      effectiveReferrer?.startsWith("https://localhost") ||
+      effectiveReferrer?.startsWith(
+        `https://${window.location.hostname}/${url.slug}`,
+      )
+    ) {
+      effectiveReferrer = "";
+    }
 
     // Get IP address using our utility function
     const ipAddress = await getClientIP();
@@ -235,7 +243,12 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
         `[recordPasswordProtectedVisit] Error getting location:`,
         locError,
       );
-      locationData = { country: "Unknown", region: "Unknown", isp: "Unknown" };
+      locationData = {
+        country: "Unknown",
+        region: "Unknown",
+        city: "Unknown",
+        isp: "Unknown",
+      };
     }
 
     // Generate a more consistent visitor ID using hash
@@ -252,6 +265,7 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
     const safeLocationData = {
       country: locationData?.country || "Unknown",
       region: locationData?.region || "Unknown",
+      city: locationData?.city || "Unknown",
       isp: locationData?.isp || "Unknown",
     };
 

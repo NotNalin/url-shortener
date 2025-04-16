@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { verifyUrlPassword } from "@/app/actions";
-import { FaLock } from "react-icons/fa";
+import { FaLock, FaSpinner } from "react-icons/fa";
 
 interface PasswordPromptProps {
   urlId: string;
@@ -20,13 +20,10 @@ export function PasswordPrompt({ urlId, slug }: PasswordPromptProps) {
     setIsSubmitting(true);
 
     try {
-      // Get the original referrer
       const originalReferrer = document.referrer;
-
       const result = await verifyUrlPassword(urlId, password);
 
       if (result.success && result.originalUrl) {
-        // Append the original referrer to the URL if it exists
         const redirectUrl = new URL(result.originalUrl);
         if (originalReferrer) {
           redirectUrl.searchParams.set("original_referrer", originalReferrer);
@@ -45,26 +42,20 @@ export function PasswordPrompt({ urlId, slug }: PasswordPromptProps) {
   return (
     <div className="max-w-md mx-auto mt-10 p-6 rounded-lg shadow-md border border-border">
       <div className="flex items-center justify-center mb-6">
-        <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/20">
-          <FaLock className="text-blue-600 dark:text-blue-400 text-xl" />
+        <div className="p-3 rounded-full bg-white">
+          <FaLock className="text-red-600 text-xl" />
         </div>
       </div>
-      <h2 className="text-xl font-bold mb-4 text-center">Protected Link</h2>
-      <p className="mb-2 text-center text-muted-foreground">
+      <h2 className="text-xl font-bold mb-5 text-center">Protected Link</h2>
+      <p className="mb-5 text-center text-muted-foreground font-bold">
         {typeof window !== "undefined"
           ? window.location.origin.replace(/(^\w+:|^)\/\//, "")
           : ""}
         /{slug}
       </p>
-      <p className="mb-6 text-center text-muted-foreground">
-        This link is protected. Please enter the passphrase to continue.
-      </p>
-      <p className="mb-4 text-center text-sm text-muted-foreground">
-        You can also access this link by adding{" "}
-        <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-          ?key=your_password
-        </code>{" "}
-        to the URL.
+      <p className="mb-4 text-center text-muted-foreground">
+        This link is protected. <br />
+        Please enter the passphrase to continue.
       </p>
 
       <form onSubmit={handleSubmit}>
@@ -75,24 +66,36 @@ export function PasswordPrompt({ urlId, slug }: PasswordPromptProps) {
           <input
             id="password"
             type="password"
-            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2"
             placeholder="Enter passphrase"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            autoFocus
           />
-          {error && <div className="mb-4 text-red-500">{error}</div>}
+          {error && <div className="mt-2 text-red-500 text-sm">{error}</div>}
+
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+            className="w-full py-2 px-6 mt-3 text-base font-medium text-primary bg-white hover:bg-gray-50 rounded-lg border border-gray-300 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Verifying..." : "Continue"}
+            {isSubmitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <FaSpinner className="animate-spin" />
+                Verifying...
+              </span>
+            ) : (
+              "Continue"
+            )}
           </button>
         </div>
       </form>
-      <p className="text-sm text-center text-muted-foreground">
-        If you do not have a passphrase, please contact the link owner.
+
+      <p className="text-xs text-center text-muted-foreground mt-4">
+        You can also access this link by adding{" "}
+        <code className="bg-white px-1 py-1 rounded">?key=password</code> to the
+        URL.
       </p>
     </div>
   );

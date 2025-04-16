@@ -7,7 +7,7 @@ import { headers } from "next/headers";
 export async function getClientIP(): Promise<string> {
   try {
     const headersList = await headers();
-    
+
     // Use type assertion to work around possible typing issues
     const h = headersList as unknown as { get(name: string): string | null };
 

@@ -6,6 +6,7 @@ import { cache } from "react";
 interface LocationData {
   country: string;
   region: string;
+  city: string;
   isp: string;
 }
 
@@ -72,6 +73,7 @@ async function getLocationFromIP(
     return {
       country: data.country_name || "Unknown",
       region: data.region || "Unknown",
+      city: data.city || "Unknown",
       isp: data.org || "Unknown", // Internet Service Provider
     };
   } catch (error) {
@@ -135,6 +137,7 @@ function getFallbackLocation(): LocationData {
   return {
     country: "Unknown",
     region: "Unknown",
+    city: "Unknown",
     isp: "Unknown",
   };
 }
