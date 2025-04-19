@@ -262,11 +262,9 @@ async function generateTimeSeriesData(
   ];
 
   // Execute the aggregation pipeline
-  const result = await Analytics.aggregate(pipeline);
-
   // Return the raw aggregated results
   // The frontend will handle filling gaps and formatting
-  return result;
+  return await Analytics.aggregate(pipeline);
 }
 
 /**

@@ -1,47 +1,48 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { AnalyticsData, RecentClickData, UrlDocument } from "@/lib/types";
+import React, {useEffect, useState} from "react";
+import {AnalyticsData, RecentClickData, UrlDocument} from "@/lib/types";
 import {
-  FaChartBar,
-  FaLink,
-  FaMousePointer,
-  FaClock,
-  FaDesktop,
-  FaMobileAlt,
-  FaTabletAlt,
-  FaWindows,
-  FaApple,
-  FaLinux,
   FaAndroid,
+  FaApple,
+  FaChartBar,
   FaChrome,
-  FaFirefox,
-  FaSafari,
-  FaEdge,
-  FaInternetExplorer,
-  FaOpera,
-  FaGlobe,
-  FaTv,
-  FaKey,
+  FaClock,
   FaCopy,
-  FaSearch,
+  FaDesktop,
+  FaEdge,
+  FaFirefox,
+  FaGlobe,
+  FaInternetExplorer,
+  FaKey,
+  FaLink,
+  FaLinux,
   FaMapMarkerAlt,
+  FaMobileAlt,
+  FaMousePointer,
+  FaOpera,
   FaQrcode,
+  FaSafari,
+  FaSearch,
+  FaTabletAlt,
+  FaTv,
+  FaWindows,
 } from "react-icons/fa";
 import {
-  ResponsiveContainer,
-  AreaChart,
   Area,
+  AreaChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  Legend,
 } from "recharts";
 import dynamic from "next/dynamic";
-import { MdAssistant, MdWatch } from "react-icons/md";
-import { IoGameController } from "react-icons/io5";
-import { QRCodeSVG } from "qrcode.react";
+import {MdAssistant, MdWatch} from "react-icons/md";
+import {IoGameController} from "react-icons/io5";
+import QRCodeModal from "./QRCodeModal";
+import {getCountryFlag} from "@/lib/utils/geolocation";
 
 // Add CSS variables for chart colors that work in both light and dark mode
 const chartStyles = {
@@ -79,7 +80,7 @@ export default function AnalyticsDashboard({
   const [activeDeviceTab, setActiveDeviceTab] = useState("device");
   const [copied, setCopied] = useState<string | null>(null);
   const [shortUrl, setShortUrl] = useState(`/${slug}`);
-  const [showQRCode, setShowQRCode] = useState(false);
+  const [showQRCode, setShowQRCode] = useState<string | null>(null);
 
   // Add copy to clipboard function
   function copyToClipboard(text: string, type: string) {
@@ -119,42 +120,6 @@ export default function AnalyticsDashboard({
 
     fetchAnalytics();
   }, [slug, timeRange]);
-
-  // Add download QR code function from LinksList.tsx
-  function downloadQRCode() {
-    const svg = document.querySelector(`#qr-code-${slug} svg`);
-    if (svg) {
-      const svgData = new XMLSerializer().serializeToString(svg);
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      const img = new Image();
-      img.onload = () => {
-        // Set canvas size to accommodate QR code and text
-        canvas.width = img.width;
-        canvas.height = img.height + 40; // Extra space for text
-
-        // Draw white background
-        ctx!.fillStyle = "white";
-        ctx!.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Draw QR code
-        ctx!.drawImage(img, 0, 0);
-
-        // Add text
-        ctx!.font = "14px Arial";
-        ctx!.fillStyle = "black";
-        ctx!.textAlign = "center";
-        ctx!.fillText(shortUrl, canvas.width / 2, img.height + 20);
-
-        const pngFile = canvas.toDataURL("image/png");
-        const downloadLink = document.createElement("a");
-        downloadLink.download = `qr-code-${slug}.png`;
-        downloadLink.href = pngFile;
-        downloadLink.click();
-      };
-      img.src = "data:image/svg+xml;base64," + btoa(svgData);
-    }
-  }
 
   if (loading) {
     return (
@@ -441,7 +406,7 @@ export default function AnalyticsDashboard({
                 )}
               </button>
               <button
-                onClick={() => setShowQRCode(true)}
+                onClick={() => setShowQRCode(slug)}
                 className="p-1 rounded transition-colors text-primary hover:text-primary-hover hover:bg-primary/10"
                 title="Show QR Code"
               >
@@ -476,46 +441,7 @@ export default function AnalyticsDashboard({
       </div>
 
       {/* QR Code Modal */}
-      {showQRCode && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background p-6 rounded-lg shadow-lg max-w-sm w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">QR Code</h3>
-              <button
-                onClick={() => setShowQRCode(false)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="flex flex-col items-center gap-4">
-              <div className="p-4 bg-white rounded-lg" id={`qr-code-${slug}`}>
-                <QRCodeSVG
-                  value={shortUrl}
-                  size={200}
-                  level="H"
-                  includeMargin={true}
-                  className="rounded-lg"
-                />
-              </div>
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-2">
-                  Scan to visit:
-                </p>
-                <p className="text-sm font-medium break-all max-w-[280px]">
-                  {shortUrl}
-                </p>
-              </div>
-              <button
-                onClick={downloadQRCode}
-                className="text-sm text-primary hover:underline"
-              >
-                Download QR Code
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showQRCode && <QRCodeModal slug={slug} setShowQRCode={setShowQRCode} />}
 
       {/* Top Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -1432,14 +1358,12 @@ function formatTooltipDate(dateStr: string, timeRange: string): string {
   }
 
   // Format the date with full details
-  const fullDate = date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(undefined, {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-
-  return fullDate;
 }
 
 /**
@@ -1485,42 +1409,4 @@ function calculateClientDateRange(timeRange: string): {
       startDate.setHours(0, 0, 0, 0);
   }
   return { startDate, endDate };
-}
-
-/**
- * Get country flag emoji from country name
- */
-function getCountryFlag(countryName: string): string {
-  // ISO 3166-1 alpha-2 codes for common countries
-  const countryCodes: Record<string, string> = {
-    "United States": "US",
-    "United Kingdom": "GB",
-    Canada: "CA",
-    Australia: "AU",
-    Germany: "DE",
-    France: "FR",
-    Italy: "IT",
-    Spain: "ES",
-    Japan: "JP",
-    China: "CN",
-    India: "IN",
-    Brazil: "BR",
-    Mexico: "MX",
-    Russia: "RU",
-    Netherlands: "NL",
-    Sweden: "SE",
-    Norway: "NO",
-    Unknown: "unknown",
-  };
-
-  // Get the country code or default to empty
-  const code = countryCodes[countryName] || "";
-
-  // Convert country code to flag emoji (works in modern browsers)
-  if (code === "unknown" || !code) return "🌍";
-
-  // For valid country codes, convert to regional indicator symbols
-  return code
-    .toUpperCase()
-    .replace(/./g, (char) => String.fromCodePoint(char.charCodeAt(0) + 127397));
 }

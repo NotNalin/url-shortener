@@ -1,8 +1,8 @@
 "use server";
 
 import { connectToDatabase } from "@/lib/db";
-import { Url } from "../lib/models/url";
-import { Analytics } from "../lib/models/analytics";
+import { Url } from "@/lib/models/url";
+import { Analytics } from "@/lib/models/analytics";
 import {
   CreateUrlResponse,
   VerifyPasswordResponse,
@@ -16,6 +16,7 @@ import { getCachedLocationFromIP } from "@/lib/utils/geolocation";
 import { parseUserAgent } from "@/lib/utils/userAgent";
 import { getClientIP } from "@/lib/utils/ipAddress";
 import { createHash } from "crypto";
+import { ReadonlyHeaders } from "next/dist/server/web/spec-extension/adapters/headers";
 
 // Create shortened URL
 export async function createShortUrl(
@@ -54,6 +55,14 @@ export async function createShortUrl(
     }
   }
 
+  const ipAddress = await getClientIP();
+  const headersList = await headers();
+  const referer = headersList.get("referer") || "";
+  const userAgent = headersList.get("user-agent") || "";
+  const userAgentData = parseUserAgent(userAgent);
+
+  const locationData = await getCachedLocationFromIP(ipAddress);
+
   // Basic URL data
   const urlData: {
     originalUrl: string;
@@ -62,10 +71,46 @@ export async function createShortUrl(
     expiresAt?: Date;
     maxClicks?: number;
     passwordHash?: string;
+    ipAddress?: string;
+    referer?: string;
+    userAgent?: {
+      browser: {
+        name: string;
+        version: string;
+        major: string;
+        browserType: string;
+      };
+      cpu: {
+        architecture: string;
+      };
+      device: {
+        vendor: string;
+        model: string;
+        deviceType: string;
+      };
+      engine: {
+        name: string;
+        version: string;
+      };
+      os: {
+        name: string;
+        version: string;
+      };
+    };
+    location?: {
+      country: string;
+      region: string;
+      city: string;
+      isp: string;
+    };
   } = {
     originalUrl,
     slug,
     userId,
+    ipAddress,
+    referer: referer,
+    userAgent: userAgentData,
+    location: locationData,
   };
 
   // Add optional fields for authenticated users
@@ -198,9 +243,64 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
 
     const headersList = await headers();
     const userAgent = headersList.get("user-agent") || "";
-    const referer = headersList.get("referer") || "";
 
     // Extract request URL information safely
+    const referer = getReferrer(headersList, url);
+    // Get IP address using our utility function
+    const ipAddress = await getClientIP();
+
+    // Get location data with caching
+    const locationData = await getCachedLocationFromIP(ipAddress);
+
+    // Generate a more consistent visitor ID using hash
+    const visitorIdInput = `${ipAddress}-${userAgent}`;
+    const visitorId = createHash("sha256")
+      .update(visitorIdInput)
+      .digest("hex")
+      .substring(0, 16);
+
+    // Parse user agent data with shared utility
+    const userAgentData = parseUserAgent(userAgent);
+
+    // Validate url ID
+    if (!url._id) {
+      console.error(
+        `[recordPasswordProtectedVisit] Missing URL ID for slug: ${url.slug}`,
+      );
+      return false;
+    }
+
+    // Create analytics entry with location data
+    const analyticsRecord = {
+      urlId: url._id.toString(),
+      slug: url.slug,
+      visitorId,
+      ipAddress,
+      referer: referer,
+      userAgent: userAgentData,
+      location: locationData,
+      timestamp: new Date(),
+    };
+
+    await Analytics.create(analyticsRecord);
+    return true;
+  } catch (error) {
+    console.error(
+      `[recordPasswordProtectedVisit] Error recording analytics for slug: ${url.slug}:`,
+      error,
+    );
+    return false;
+  }
+}
+
+async function getReferrer(
+  headersList: ReadonlyHeaders,
+  url: UrlDocument | null,
+) {
+  const referer = headersList.get("referer") || "";
+  let effectiveReferrer = referer;
+
+  if (url) {
     let requestUrl: URL | null = null;
     const urlHeader = headersList.get("url") || "";
 
@@ -221,104 +321,16 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
     }
 
     // Use the effective referrer for analytics
-    let effectiveReferrer = originalReferrer || referer;
+    effectiveReferrer = originalReferrer || referer;
     if (
       effectiveReferrer?.startsWith("https://localhost") ||
-      (requestUrl && effectiveReferrer?.startsWith(
-        `https://${requestUrl.hostname}/${url.slug}`,
-      ))
+      (requestUrl &&
+        effectiveReferrer?.startsWith(
+          `https://${requestUrl.hostname}/${url.slug}`,
+        ))
     ) {
       effectiveReferrer = "";
     }
-
-    // Get IP address using our utility function
-    const ipAddress = await getClientIP();
-
-    // Get location data with caching
-    let locationData;
-    try {
-      locationData = await getCachedLocationFromIP(ipAddress);
-    } catch (locError) {
-      console.error(
-        `[recordPasswordProtectedVisit] Error getting location:`,
-        locError,
-      );
-      locationData = {
-        country: "Unknown",
-        region: "Unknown",
-        city: "Unknown",
-        isp: "Unknown",
-      };
-    }
-
-    // Generate a more consistent visitor ID using hash
-    const visitorIdInput = `${ipAddress}-${userAgent}`;
-    const visitorId = createHash("sha256")
-      .update(visitorIdInput)
-      .digest("hex")
-      .substring(0, 16);
-
-    // Parse user agent data with shared utility
-    const userAgentData = parseUserAgent(userAgent);
-
-    // Make sure we have a valid location object even if parts of it are unknown
-    const safeLocationData = {
-      country: locationData?.country || "Unknown",
-      region: locationData?.region || "Unknown",
-      city: locationData?.city || "Unknown",
-      isp: locationData?.isp || "Unknown",
-    };
-
-    // Validate url ID
-    if (!url._id) {
-      console.error(
-        `[recordPasswordProtectedVisit] Missing URL ID for slug: ${url.slug}`,
-      );
-      return false;
-    }
-
-    // Create analytics entry with location data
-    const analyticsRecord = {
-      urlId: url._id.toString(),
-      slug: url.slug,
-      visitorId,
-      ipAddress,
-      referer: effectiveReferrer,
-      userAgent: {
-        browser: {
-          name: userAgentData.browser.name,
-          version: userAgentData.browser.version,
-          major: userAgentData.browser.major,
-          browserType: userAgentData.browser.browserType,
-        },
-        cpu: {
-          architecture: userAgentData.cpu.architecture,
-        },
-        device: {
-          vendor: userAgentData.device.vendor,
-          model: userAgentData.device.model,
-          deviceType: userAgentData.device.deviceType,
-        },
-        engine: {
-          name: userAgentData.engine.name,
-          version: userAgentData.engine.version,
-        },
-        os: {
-          name: userAgentData.os.name,
-          version: userAgentData.os.version,
-        },
-      },
-      location: safeLocationData,
-      timestamp: new Date(),
-    };
-
-    await Analytics.create(analyticsRecord);
-    return true;
-  } catch (error) {
-    console.error(
-      `[recordPasswordProtectedVisit] Error recording analytics for slug: ${url.slug}:`,
-      error,
-    );
-    return false;
   }
+  return effectiveReferrer;
 }

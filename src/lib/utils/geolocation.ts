@@ -21,7 +21,7 @@ async function getLocationFromIP(
   retryCount = 0,
 ): Promise<LocationData | null> {
   const MAX_RETRIES = 2;
-  const RETRY_DELAY = 1000; // 1 second delay between retries
+  const RETRY_DELAY = 1000; // 1-second delay between retries
 
   if (!ipAddress) return null;
 
@@ -218,3 +218,314 @@ export const getCachedLocationFromIP = cache(
     }
   },
 );
+
+export function getCountryFlag(countryName: string): string {
+  // Create a reverse mapping from English country names to their ISO codes
+  // This uses the standard Intl.DisplayNames API in the intended way
+  try {
+    // List of ISO 3166-1 alpha-2 country codes
+    // This is a comprehensive list of codes that should be supported by most systems
+    const isoCodes = [
+      "AD",
+      "AE",
+      "AF",
+      "AG",
+      "AI",
+      "AL",
+      "AM",
+      "AO",
+      "AQ",
+      "AR",
+      "AS",
+      "AT",
+      "AU",
+      "AW",
+      "AX",
+      "AZ",
+      "BA",
+      "BB",
+      "BD",
+      "BE",
+      "BF",
+      "BG",
+      "BH",
+      "BI",
+      "BJ",
+      "BL",
+      "BM",
+      "BN",
+      "BO",
+      "BQ",
+      "BR",
+      "BS",
+      "BT",
+      "BV",
+      "BW",
+      "BY",
+      "BZ",
+      "CA",
+      "CC",
+      "CD",
+      "CF",
+      "CG",
+      "CH",
+      "CI",
+      "CK",
+      "CL",
+      "CM",
+      "CN",
+      "CO",
+      "CR",
+      "CU",
+      "CV",
+      "CW",
+      "CX",
+      "CY",
+      "CZ",
+      "DE",
+      "DJ",
+      "DK",
+      "DM",
+      "DO",
+      "DZ",
+      "EC",
+      "EE",
+      "EG",
+      "EH",
+      "ER",
+      "ES",
+      "ET",
+      "FI",
+      "FJ",
+      "FK",
+      "FM",
+      "FO",
+      "FR",
+      "GA",
+      "GB",
+      "GD",
+      "GE",
+      "GF",
+      "GG",
+      "GH",
+      "GI",
+      "GL",
+      "GM",
+      "GN",
+      "GP",
+      "GQ",
+      "GR",
+      "GS",
+      "GT",
+      "GU",
+      "GW",
+      "GY",
+      "HK",
+      "HM",
+      "HN",
+      "HR",
+      "HT",
+      "HU",
+      "ID",
+      "IE",
+      "IL",
+      "IM",
+      "IN",
+      "IO",
+      "IQ",
+      "IR",
+      "IS",
+      "IT",
+      "JE",
+      "JM",
+      "JO",
+      "JP",
+      "KE",
+      "KG",
+      "KH",
+      "KI",
+      "KM",
+      "KN",
+      "KP",
+      "KR",
+      "KW",
+      "KY",
+      "KZ",
+      "LA",
+      "LB",
+      "LC",
+      "LI",
+      "LK",
+      "LR",
+      "LS",
+      "LT",
+      "LU",
+      "LV",
+      "LY",
+      "MA",
+      "MC",
+      "MD",
+      "ME",
+      "MF",
+      "MG",
+      "MH",
+      "MK",
+      "ML",
+      "MM",
+      "MN",
+      "MO",
+      "MP",
+      "MQ",
+      "MR",
+      "MS",
+      "MT",
+      "MU",
+      "MV",
+      "MW",
+      "MX",
+      "MY",
+      "MZ",
+      "NA",
+      "NC",
+      "NE",
+      "NF",
+      "NG",
+      "NI",
+      "NL",
+      "NO",
+      "NP",
+      "NR",
+      "NU",
+      "NZ",
+      "OM",
+      "PA",
+      "PE",
+      "PF",
+      "PG",
+      "PH",
+      "PK",
+      "PL",
+      "PM",
+      "PN",
+      "PR",
+      "PS",
+      "PT",
+      "PW",
+      "PY",
+      "QA",
+      "RE",
+      "RO",
+      "RS",
+      "RU",
+      "RW",
+      "SA",
+      "SB",
+      "SC",
+      "SD",
+      "SE",
+      "SG",
+      "SH",
+      "SI",
+      "SJ",
+      "SK",
+      "SL",
+      "SM",
+      "SN",
+      "SO",
+      "SR",
+      "SS",
+      "ST",
+      "SV",
+      "SX",
+      "SY",
+      "SZ",
+      "TC",
+      "TD",
+      "TF",
+      "TG",
+      "TH",
+      "TJ",
+      "TK",
+      "TL",
+      "TM",
+      "TN",
+      "TO",
+      "TR",
+      "TT",
+      "TV",
+      "TW",
+      "TZ",
+      "UA",
+      "UG",
+      "UM",
+      "US",
+      "UY",
+      "UZ",
+      "VA",
+      "VC",
+      "VE",
+      "VG",
+      "VI",
+      "VN",
+      "VU",
+      "WF",
+      "WS",
+      "YE",
+      "YT",
+      "ZA",
+      "ZM",
+      "ZW",
+    ];
+
+    // Create a mapping from country names to ISO codes
+    const nameToCodeMap: Record<string, string> = {};
+
+    // Use Intl.DisplayNames to get the standard name for each country code
+    const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+
+    // Build the mapping
+    for (const code of isoCodes) {
+      try {
+        const name = regionNames.of(code);
+        if (name) {
+          nameToCodeMap[name] = code;
+          // Also add the name without any non-alphanumeric characters as a fallback
+          const simplifiedName = name.replace(/[^a-zA-Z0-9\s]/g, "").trim();
+          if (simplifiedName !== name) {
+            nameToCodeMap[simplifiedName] = code;
+          }
+        }
+      } catch {}
+    }
+
+    // Handle common name variations not covered by Intl.DisplayNames
+    const commonVariations: Record<string, string> = {
+      "United States of America": "US",
+      USA: "US",
+      America: "US",
+      UK: "GB",
+      Britain: "GB",
+      "Great Britain": "GB",
+      England: "GB", // Note: England is part of GB but not exactly the same
+    };
+
+    // Merge variations into our map
+    Object.assign(nameToCodeMap, commonVariations);
+
+    // Get the country code or default to empty string
+    const code = nameToCodeMap[countryName] || "";
+
+    // Convert country code to flag emoji (works in modern browsers)
+    if (!code) return "🌍"; // Earth globe as fallback
+
+    // For valid country codes, convert to regional indicator symbols
+    return code
+      .toUpperCase()
+      .split("")
+      .map((char) => String.fromCodePoint(char.charCodeAt(0) + 127397))
+      .join("");
+  } catch {
+    // If anything goes wrong, return the earth emoji as fallback
+    return "🌍";
+  }
+}

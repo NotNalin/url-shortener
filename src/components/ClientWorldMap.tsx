@@ -93,7 +93,7 @@ const COUNTRY_NAME_MAP: Record<string, string> = {
   "democratic people's republic of korea": "north korea",
   "kingdom of saudi arabia": "saudi arabia",
   "united arab emirates": "uae",
-  türkiye: "turkey",
+  "türkiye": "turkey",
   "myanmar (burma)": "myanmar",
   "czech republic": "czechia",
   "republic of north macedonia": "north macedonia",

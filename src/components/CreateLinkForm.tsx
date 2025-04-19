@@ -7,6 +7,7 @@ import Link from "next/link";
 import { FaChevronDown } from "react-icons/fa6";
 import { FaEyeSlash, FaEye, FaDownload } from "react-icons/fa";
 import { QRCodeSVG } from "qrcode.react";
+import { downloadQRCode } from "@/lib/utils/qrCodeDownload";
 
 interface CreateLinkFormProps {
   isLoggedIn: boolean;
@@ -315,13 +316,16 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
             {/* QR Code Section */}
             <div className="p-4 bg-white rounded-lg border border-border">
               <div className="flex flex-col items-center gap-4">
-                <div className="p-2 bg-white rounded-md">
+                <div
+                  className="bg-white rounded-lg shadow-sm"
+                  id={`qr-code-${result.slug}`}
+                >
                   <QRCodeSVG
-                    value={result.shortUrl}
-                    size={250}
+                    value={`${window.location.origin}/${result.slug}`}
+                    size={180}
                     level="H"
-                    includeMargin={true}
-                    className="rounded-md"
+                    marginSize={4}
+                    className="rounded-lg"
                   />
                 </div>
                 <div className="text-center">
@@ -333,47 +337,7 @@ export function CreateLinkForm({ isLoggedIn }: CreateLinkFormProps) {
                   </p>
                 </div>
                 <button
-                  onClick={() => {
-                    // Create a temporary link to download the QR code
-                    const svg = document.querySelector(".qr-code svg");
-                    if (svg) {
-                      const svgData = new XMLSerializer().serializeToString(
-                        svg,
-                      );
-                      const canvas = document.createElement("canvas");
-                      const ctx = canvas.getContext("2d");
-                      const img = new Image();
-                      img.onload = () => {
-                        // Set canvas size to accommodate QR code and text
-                        canvas.width = img.width;
-                        canvas.height = img.height + 40; // Extra space for text
-
-                        // Draw white background
-                        ctx!.fillStyle = "white";
-                        ctx!.fillRect(0, 0, canvas.width, canvas.height);
-
-                        // Draw QR code
-                        ctx!.drawImage(img, 0, 0);
-
-                        // Add text
-                        ctx!.font = "14px Arial";
-                        ctx!.fillStyle = "black";
-                        ctx!.textAlign = "center";
-                        ctx!.fillText(
-                          result.shortUrl,
-                          canvas.width / 2,
-                          img.height + 20,
-                        );
-
-                        const pngFile = canvas.toDataURL("image/png");
-                        const downloadLink = document.createElement("a");
-                        downloadLink.download = `qr-code-${result.slug}.png`;
-                        downloadLink.href = pngFile;
-                        downloadLink.click();
-                      };
-                      img.src = "data:image/svg+xml;base64," + btoa(svgData);
-                    }
-                  }}
+                  onClick={() => downloadQRCode(result.slug)}
                   className="text-primary hover:text-primary/80 font-medium flex items-center gap-2"
                 >
                   <FaDownload className="w-5 h-5" />

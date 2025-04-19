@@ -8,6 +8,38 @@ export interface UrlDocument {
   maxClicks?: number;
   currentClicks: number;
   passwordHash?: string;
+  ipAddress?: string;
+  referer?: string;
+  userAgent?: {
+    browser: {
+      name: string;
+      version: string;
+      major: string;
+      browserType: string;
+    };
+    cpu: {
+      architecture: string;
+    };
+    device: {
+      vendor: string;
+      model: string;
+      deviceType: string;
+    };
+    engine: {
+      name: string;
+      version: string;
+    };
+    os: {
+      name: string;
+      version: string;
+    };
+  };
+  location?: {
+    country: string;
+    region: string;
+    city: string;
+    isp: string;
+  };
 }
 
 export type CreateUrlResponse = {

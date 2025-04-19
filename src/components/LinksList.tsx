@@ -12,11 +12,9 @@ import {
   FaChartBar,
   FaQrcode,
   FaSpinner,
-  FaClipboard,
-  FaDownload,
 } from "react-icons/fa";
 import Link from "next/link";
-import { QRCodeSVG } from "qrcode.react";
+import QRCodeModal from "./QRCodeModal";
 
 interface LinksListProps {
   urls: UrlDocument[];
@@ -54,55 +52,6 @@ export function LinksList({ urls }: LinksListProps) {
     alert("URL copied to clipboard!");
   }
 
-  function downloadQRCode(slug: string) {
-    const url = `${window.location.origin}/${slug}`;
-    const svg = document.querySelector(`#qr-code-${slug} svg`);
-    if (!svg) return;
-
-    // Create temporary canvas
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Convert SVG to image
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const img = new Image();
-
-    img.onload = () => {
-      // Set canvas dimensions
-      canvas.width = img.width;
-      canvas.height = img.height + 40; // Extra space for text
-
-      // Draw white background
-      ctx.fillStyle = "white";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw QR code
-      ctx.drawImage(img, 0, 0);
-
-      // Add text
-      ctx.font = "14px Arial";
-      ctx.fillStyle = "black";
-      ctx.textAlign = "center";
-      ctx.fillText(url, canvas.width / 2, img.height + 20);
-
-      // Download image
-      try {
-        const pngFile = canvas.toDataURL("image/png");
-        const downloadLink = document.createElement("a");
-        downloadLink.download = `qr-code-${slug}.png`;
-        downloadLink.href = pngFile;
-        downloadLink.click();
-      } catch (e) {
-        console.error("Error generating QR code download:", e);
-      }
-    };
-
-    img.src =
-      "data:image/svg+xml;base64," +
-      btoa(unescape(encodeURIComponent(svgData)));
-  }
-
   return (
     <div className="space-y-6 p-3">
       <div className="rounded-xl border border-border shadow-md overflow-hidden bg-card">
@@ -132,7 +81,7 @@ export function LinksList({ urls }: LinksListProps) {
                 >
                   <td className="px-4 sm:px-6 py-3 whitespace-nowrap">
                     <a
-                      href={`/${url.slug}`}
+                      href={`/dashboard/analytics/${url.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:text-primary-hover font-semibold transition-colors"
@@ -234,65 +183,7 @@ export function LinksList({ urls }: LinksListProps) {
 
       {/* QR Code Modal */}
       {showQRCode && (
-        <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={(e) => e.target === e.currentTarget && setShowQRCode(null)}
-        >
-          <div className="bg-background p-4 sm:p-6 rounded-lg shadow-xl w-full max-w-xs sm:max-w-sm border border-border/30">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">QR Code</h3>
-              <button
-                onClick={() => setShowQRCode(null)}
-                className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted/20 transition-colors"
-                aria-label="Close"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="flex flex-col items-center gap-3 sm:gap-4">
-              <div
-                className="p-3 sm:p-4 bg-white rounded-lg shadow-sm"
-                id={`qr-code-${showQRCode}`}
-              >
-                <QRCodeSVG
-                  value={`${window.location.origin}/${showQRCode}`}
-                  size={180}
-                  level="H"
-                  includeMargin={true}
-                  className="rounded-lg"
-                />
-              </div>
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1 sm:mb-2">
-                  Scan to visit:
-                </p>
-                <p className="text-sm font-medium break-all max-w-[250px]">
-                  {window.location.origin}/{showQRCode}
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto mt-1 sm:mt-2">
-                <button
-                  onClick={() => downloadQRCode(showQRCode)}
-                  className="text-sm px-4 py-2 border border-primary/30 rounded-md text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-1"
-                >
-                  <FaDownload className="w-4 h-4" />
-                  Download
-                </button>
-                <button
-                  onClick={() => {
-                    const url = `${window.location.origin}/${showQRCode}`;
-                    navigator.clipboard.writeText(url);
-                    alert("URL copied to clipboard!");
-                  }}
-                  className="text-sm px-4 py-2 border border-primary/30 rounded-md text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-1"
-                >
-                  <FaClipboard className="w-4 h-4" />
-                  Copy URL
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <QRCodeModal slug={showQRCode} setShowQRCode={setShowQRCode} />
       )}
     </div>
   );

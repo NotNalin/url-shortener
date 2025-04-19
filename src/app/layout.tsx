@@ -2,11 +2,12 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { Navbar } from "../components/Navbar";
+import { Navbar } from "@/components/Navbar";
 import Footer from "../components/Footer";
-import { ThemeProvider } from "../components/ThemeSwitch";
+import { ThemeProvider } from "@/components/ThemeSwitch";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/react";
+import React from "react";
 
 export const metadata: Metadata = {
   title: "URL Shortener",

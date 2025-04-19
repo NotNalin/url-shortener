@@ -1,8 +1,8 @@
 import { connectToDatabase } from "@/lib/db";
-import { Url } from "../../lib/models/url";
-import { Analytics } from "../../lib/models/analytics";
+import { Url } from "@/lib/models/url";
+import { Analytics } from "@/lib/models/analytics";
 import { notFound, redirect } from "next/navigation";
-import { PasswordPrompt } from "../../components/PasswordPrompt";
+import { PasswordPrompt } from "@/components/PasswordPrompt";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { getCachedLocationFromIP } from "@/lib/utils/geolocation";

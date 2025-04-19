@@ -45,7 +45,7 @@ export interface AnalyticsDocument extends Document {
 type AnalyticsModel = Model<AnalyticsDocument>;
 
 // Sub-schemas to avoid conflicts with the "type" key
-const browserSchema = new Schema(
+export const browserSchema = new Schema(
   {
     name: { type: String },
     version: { type: String },
@@ -55,14 +55,14 @@ const browserSchema = new Schema(
   { _id: false },
 );
 
-const cpuSchema = new Schema(
+export const cpuSchema = new Schema(
   {
     architecture: { type: String },
   },
   { _id: false },
 );
 
-const deviceSchema = new Schema(
+export const deviceSchema = new Schema(
   {
     vendor: { type: String },
     model: { type: String },
@@ -71,7 +71,7 @@ const deviceSchema = new Schema(
   { _id: false },
 );
 
-const engineSchema = new Schema(
+export const engineSchema = new Schema(
   {
     name: { type: String },
     version: { type: String },
@@ -79,7 +79,7 @@ const engineSchema = new Schema(
   { _id: false },
 );
 
-const osSchema = new Schema(
+export const osSchema = new Schema(
   {
     name: { type: String },
     version: { type: String },

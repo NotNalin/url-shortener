@@ -37,7 +37,7 @@ export default function Footer() {
   return (
     <small className="block lg:mt-24 mt-16">
       <time>© {YEAR}</time>{" "}
-      <a className="no-underline" href="#">
+      <a className="no-underline" href="https://github.com/NotNalin">
         NotNalin
       </a>
       <SocialLinks />

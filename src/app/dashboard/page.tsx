@@ -1,5 +1,5 @@
 import { getUserUrls } from "../actions";
-import { LinksList } from "../../components/LinksList";
+import { LinksList } from "@/components/LinksList";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import {

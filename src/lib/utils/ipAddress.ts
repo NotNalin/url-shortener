@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+import {headers} from "next/headers";
 
 /**
  * Extract the client IP address from request headers with fallbacks
@@ -34,8 +34,7 @@ export async function getClientIP(): Promise<string> {
           header === "forwarded-for" ||
           header === "forwarded"
         ) {
-          const ip = value.split(",")[0].trim();
-          return ip;
+          return value.split(",")[0].trim();
         }
         return value.trim();
       }
