@@ -1,91 +1,8 @@
-import mongoose, { Schema, Document, Model } from "mongoose";
+import mongoose, { Schema, Model } from "mongoose";
 
-/**
- * Interface for analytics data
- */
-export interface AnalyticsDocument extends Document {
-  urlId: string;
-  slug: string;
-  timestamp: Date;
-  visitorId: string;
-  ipAddress: string;
-  referer: string;
-  userAgent: {
-    browser: {
-      name: string;
-      version: string;
-      major: string;
-      browserType: string;
-    };
-    cpu: {
-      architecture: string;
-    };
-    device: {
-      vendor: string;
-      model: string;
-      deviceType: string;
-    };
-    engine: {
-      name: string;
-      version: string;
-    };
-    os: {
-      name: string;
-      version: string;
-    };
-  };
-  location: {
-    country: string;
-    region: string;
-    city: string;
-    isp: string;
-  };
-}
+import { AnalyticsDocument } from "../types";
 
 type AnalyticsModel = Model<AnalyticsDocument>;
-
-// Sub-schemas to avoid conflicts with the "type" key
-export const browserSchema = new Schema(
-  {
-    name: { type: String },
-    version: { type: String },
-    major: { type: String },
-    browserType: { type: String },
-  },
-  { _id: false },
-);
-
-export const cpuSchema = new Schema(
-  {
-    architecture: { type: String },
-  },
-  { _id: false },
-);
-
-export const deviceSchema = new Schema(
-  {
-    vendor: { type: String },
-    model: { type: String },
-    deviceType: { type: String },
-  },
-  { _id: false },
-);
-
-export const engineSchema = new Schema(
-  {
-    name: { type: String },
-    version: { type: String },
-  },
-  { _id: false },
-);
-
-export const osSchema = new Schema(
-  {
-    name: { type: String },
-    version: { type: String },
-  },
-  { _id: false },
-);
 
 // Main analytics schema
 const analyticsSchema = new Schema({
@@ -95,15 +12,10 @@ const analyticsSchema = new Schema({
   visitorId: { type: String, required: true },
   ipAddress: { type: String, required: true, index: true },
   referer: { type: String },
-  userAgent: {
-    browser: browserSchema,
-    cpu: cpuSchema,
-    device: deviceSchema,
-    engine: engineSchema,
-    os: osSchema,
-  },
+  userAgent: { type: String },
   location: {
     country: { type: String },
+    countryCode: { type: String },
     region: { type: String },
     city: { type: String },
     isp: { type: String },
@@ -123,5 +35,5 @@ export const Analytics =
   (mongoose.models.Analytics as AnalyticsModel) ||
   mongoose.model<AnalyticsDocument, AnalyticsModel>(
     "Analytics",
-    analyticsSchema,
+    analyticsSchema
   );

@@ -12,15 +12,14 @@ import { nanoid } from "nanoid";
 import bcrypt from "bcryptjs";
 import { auth } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
-import { getCachedLocationFromIP } from "@/lib/utils/geolocation";
-import { parseUserAgent } from "@/lib/utils/userAgent";
+import { getCachedLocationFromIP, isLocalIP } from "@/lib/utils/geolocation";
 import { getClientIP } from "@/lib/utils/ipAddress";
 import { createHash } from "crypto";
 import { ReadonlyHeaders } from "next/dist/server/web/spec-extension/adapters/headers";
 
 // Create shortened URL
 export async function createShortUrl(
-  formData: FormData,
+  formData: FormData
 ): Promise<CreateUrlResponse> {
   const originalUrl = formData.get("url") as string;
   const customSlug = formData.get("customSlug") as string;
@@ -59,7 +58,6 @@ export async function createShortUrl(
   const headersList = await headers();
   const referer = headersList.get("referer") || "";
   const userAgent = headersList.get("user-agent") || "";
-  const userAgentData = parseUserAgent(userAgent);
 
   const locationData = await getCachedLocationFromIP(ipAddress);
 
@@ -73,32 +71,10 @@ export async function createShortUrl(
     passwordHash?: string;
     ipAddress?: string;
     referer?: string;
-    userAgent?: {
-      browser: {
-        name: string;
-        version: string;
-        major: string;
-        browserType: string;
-      };
-      cpu: {
-        architecture: string;
-      };
-      device: {
-        vendor: string;
-        model: string;
-        deviceType: string;
-      };
-      engine: {
-        name: string;
-        version: string;
-      };
-      os: {
-        name: string;
-        version: string;
-      };
-    };
+    userAgent?: string;
     location?: {
       country: string;
+      countryCode: string;
       region: string;
       city: string;
       isp: string;
@@ -109,7 +85,7 @@ export async function createShortUrl(
     userId,
     ipAddress,
     referer: referer,
-    userAgent: userAgentData,
+    userAgent: userAgent,
     location: locationData,
   };
 
@@ -198,7 +174,7 @@ export async function deleteUrl(id: string) {
 // Verify password for protected URLs
 export async function verifyUrlPassword(
   urlId: string,
-  password: string,
+  password: string
 ): Promise<VerifyPasswordResponse> {
   await connectToDatabase();
 
@@ -245,7 +221,7 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
     const userAgent = headersList.get("user-agent") || "";
 
     // Extract request URL information safely
-    const referer = getReferrer(headersList, url);
+    const referer = await getReferrer(headersList, url);
     // Get IP address using our utility function
     const ipAddress = await getClientIP();
 
@@ -259,13 +235,10 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
       .digest("hex")
       .substring(0, 16);
 
-    // Parse user agent data with shared utility
-    const userAgentData = parseUserAgent(userAgent);
-
     // Validate url ID
     if (!url._id) {
       console.error(
-        `[recordPasswordProtectedVisit] Missing URL ID for slug: ${url.slug}`,
+        `[recordPasswordProtectedVisit] Missing URL ID for slug: ${url.slug}`
       );
       return false;
     }
@@ -277,7 +250,7 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
       visitorId,
       ipAddress,
       referer: referer,
-      userAgent: userAgentData,
+      userAgent: userAgent,
       location: locationData,
       timestamp: new Date(),
     };
@@ -287,7 +260,7 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
   } catch (error) {
     console.error(
       `[recordPasswordProtectedVisit] Error recording analytics for slug: ${url.slug}:`,
-      error,
+      error
     );
     return false;
   }
@@ -295,7 +268,7 @@ async function recordPasswordProtectedVisit(url: UrlDocument) {
 
 async function getReferrer(
   headersList: ReadonlyHeaders,
-  url: UrlDocument | null,
+  url: UrlDocument | null
 ) {
   const referer = headersList.get("referer") || "";
   let effectiveReferrer = referer;
@@ -316,18 +289,17 @@ async function getReferrer(
     } catch (error) {
       console.error(
         "[recordPasswordProtectedVisit] Invalid URL from headers:",
-        error,
+        error
       );
     }
 
     // Use the effective referrer for analytics
     effectiveReferrer = originalReferrer || referer;
+    const isLocal = isLocalIP(effectiveReferrer.replace(/^https?:\/\//, ""));
     if (
-      effectiveReferrer?.startsWith("https://localhost") ||
+      isLocal ||
       (requestUrl &&
-        effectiveReferrer?.startsWith(
-          `https://${requestUrl.hostname}/${url.slug}`,
-        ))
+        effectiveReferrer?.startsWith(`https://${requestUrl.hostname}`))
     ) {
       effectiveReferrer = "";
     }

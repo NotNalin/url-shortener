@@ -1,12 +1,5 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import { UrlDocument } from "../types";
-import {
-  browserSchema,
-  cpuSchema,
-  deviceSchema,
-  engineSchema,
-  osSchema,
-} from "./analytics";
 
 type UrlModel = Model<UrlDocument & Document>;
 
@@ -21,15 +14,10 @@ const urlSchema = new Schema<UrlDocument & Document>({
   passwordHash: { type: String },
   ipAddress: { type: String },
   referer: { type: String },
-  userAgent: {
-    browser: browserSchema,
-    cpu: cpuSchema,
-    device: deviceSchema,
-    engine: engineSchema,
-    os: osSchema,
-  },
+  userAgent: { type: String },
   location: {
     country: { type: String },
+    countryCode: { type: String },
     region: { type: String },
     city: { type: String },
     isp: { type: String },

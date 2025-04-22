@@ -1,4 +1,6 @@
-export interface UrlDocument {
+import { Document } from "mongoose";
+
+export interface UrlDocument extends Document {
   _id: string;
   originalUrl: string;
   slug: string;
@@ -10,32 +12,27 @@ export interface UrlDocument {
   passwordHash?: string;
   ipAddress?: string;
   referer?: string;
-  userAgent?: {
-    browser: {
-      name: string;
-      version: string;
-      major: string;
-      browserType: string;
-    };
-    cpu: {
-      architecture: string;
-    };
-    device: {
-      vendor: string;
-      model: string;
-      deviceType: string;
-    };
-    engine: {
-      name: string;
-      version: string;
-    };
-    os: {
-      name: string;
-      version: string;
-    };
-  };
+  userAgent?: string;
   location?: {
     country: string;
+    countryCode: string;
+    region: string;
+    city: string;
+    isp: string;
+  };
+}
+
+export interface AnalyticsDocument extends Document {
+  urlId: string;
+  slug: string;
+  timestamp: Date;
+  visitorId: string;
+  ipAddress: string;
+  referer: string;
+  userAgent: string;
+  location: {
+    country: string;
+    countryCode: string;
     region: string;
     city: string;
     isp: string;
@@ -53,6 +50,23 @@ export type VerifyPasswordResponse = {
   originalUrl?: string;
   analyticsRecorded?: boolean;
 };
+interface AnalyticsMetric {
+  name: string;
+  count: number;
+  percentage: number;
+}
+
+interface CountriesMetric extends AnalyticsMetric {
+  countryCode: string;
+}
+export interface RecentClick {
+  timestamp: Date;
+  country: string;
+  countryCode: string;
+  browser: string;
+  os: string;
+  referer: string;
+}
 
 // Analytics types
 export interface AnalyticsData {
@@ -60,66 +74,16 @@ export interface AnalyticsData {
   uniqueVisitors: number;
   totalViews: number;
   timeRangeData: TimeSeriesDataPoint[];
-  countries: CountryData[];
-  regions: RegionData[];
-  referers: RefererData[];
-  devices: DeviceData[];
-  operatingSystems: OSData[];
-  browsers: BrowserData[];
-  recentClicks: RecentClickData[];
+  countries: CountriesMetric[];
+  regions: CountriesMetric[];
+  referers: AnalyticsMetric[];
+  devices: AnalyticsMetric[];
+  operatingSystems: AnalyticsMetric[];
+  browsers: AnalyticsMetric[];
+  recentClicks: RecentClick[];
 }
 
 export interface TimeSeriesDataPoint {
   date: string;
   visits: number;
-}
-
-export interface CountryData {
-  name: string;
-  count: number;
-  percentage: number;
-}
-
-export interface RegionData {
-  name: string;
-  count: number;
-  percentage: number;
-}
-
-export interface CityData {
-  name: string;
-  count: number;
-  percentage: number;
-}
-
-export interface RefererData {
-  name: string;
-  count: number;
-  percentage: number;
-}
-
-export interface DeviceData {
-  name: string;
-  count: number;
-  percentage: number;
-}
-
-export interface OSData {
-  name: string;
-  count: number;
-  percentage: number;
-}
-
-export interface BrowserData {
-  name: string;
-  count: number;
-  percentage: number;
-}
-
-export interface RecentClickData {
-  timestamp: string | Date;
-  country: string;
-  browser: string;
-  os: string;
-  referer: string;
 }

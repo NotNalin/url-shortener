@@ -1,7 +1,7 @@
 "use client";
 
-import React, {useEffect, useState} from "react";
-import {AnalyticsData, RecentClickData, UrlDocument} from "@/lib/types";
+import React, { useEffect, useState } from "react";
+import { AnalyticsData, RecentClick, UrlDocument } from "@/lib/types";
 import {
   FaAndroid,
   FaApple,
@@ -39,10 +39,10 @@ import {
   YAxis,
 } from "recharts";
 import dynamic from "next/dynamic";
-import {MdAssistant, MdWatch} from "react-icons/md";
-import {IoGameController} from "react-icons/io5";
+import { MdAssistant, MdWatch } from "react-icons/md";
+import { IoGameController } from "react-icons/io5";
 import QRCodeModal from "./QRCodeModal";
-import {getCountryFlag} from "@/lib/utils/geolocation";
+import { getCountryFlag } from "@/lib/utils/geolocation";
 
 // Add CSS variables for chart colors that work in both light and dark mode
 const chartStyles = {
@@ -103,7 +103,7 @@ export default function AnalyticsDashboard({
         // Clear cache by adding timestamp to avoid browser caching
         const timestamp = new Date().getTime();
         const response = await fetch(
-          `/api/analytics?slug=${slug}&timeRange=${timeRange}&t=${timestamp}`,
+          `/api/analytics?slug=${slug}&timeRange=${timeRange}&t=${timestamp}`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch analytics data");
@@ -166,7 +166,7 @@ export default function AnalyticsDashboard({
     const approximateVisitors =
       analytics.uniqueVisitors > 0
         ? Math.round(
-            item.visits * (analytics.uniqueVisitors / analytics.totalVisits),
+            item.visits * (analytics.uniqueVisitors / analytics.totalVisits)
           )
         : 0;
 
@@ -224,18 +224,19 @@ export default function AnalyticsDashboard({
 
   // Recent clicks data
   const recentClicksData = analytics.recentClicks.map(
-    (click: RecentClickData, i: number) => {
+    (click: RecentClick, i: number) => {
       const date = new Date(click.timestamp);
       return {
         id: i + 1,
         date: formatTooltipDate(date.toISOString(), timeRange),
         time: date.toLocaleTimeString(),
         country: click.country,
+        countryCode: click.countryCode,
         browser: click.browser,
         os: click.os,
         referrer: formatReferrer(click.referer),
       };
-    },
+    }
   );
   // Get device icon based on device name
   const getDeviceIcon = (name: string) => {
@@ -515,6 +516,7 @@ export default function AnalyticsDashboard({
                   date: string;
                   time: string;
                   country: string;
+                  countryCode: string;
                   browser: string;
                   os: string;
                   referrer: string;
@@ -534,7 +536,7 @@ export default function AnalyticsDashboard({
                     <td className="px-4 py-3">
                       <span className="flex items-center">
                         <span className="mr-2">
-                          {getCountryFlag(click.country)}
+                          {getCountryFlag(click.countryCode)}
                         </span>
                         {click.country}
                       </span>
@@ -557,7 +559,7 @@ export default function AnalyticsDashboard({
                       </span>
                     </td>
                   </tr>
-                ),
+                )
               )}
               {recentClicksData.length === 0 && (
                 <tr>
@@ -671,11 +673,9 @@ export default function AnalyticsDashboard({
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center">
-                          {activeLocationTab === "country" && (
-                            <span className="mr-2 text-lg">
-                              {getCountryFlag(item.name)}
-                            </span>
-                          )}
+                          <span className="mr-2 text-lg">
+                            {getCountryFlag(item.countryCode)}
+                          </span>
                           <span className="font-medium">
                             {item.name || "Unknown"}
                           </span>
@@ -694,7 +694,7 @@ export default function AnalyticsDashboard({
                               style={{
                                 width: `${Math.max(
                                   Math.min(Number(item.percentage), 100),
-                                  1,
+                                  1
                                 )}%`,
                               }}
                             ></div>
@@ -769,7 +769,7 @@ export default function AnalyticsDashboard({
                           style={{
                             width: `${Math.max(
                               Math.min(Number(referer.percentage), 100),
-                              1,
+                              1
                             )}%`,
                           }}
                         ></div>
@@ -862,23 +862,23 @@ export default function AnalyticsDashboard({
                         ? item.name.toLowerCase().includes("desktop")
                           ? "bg-blue-500"
                           : item.name.toLowerCase().includes("mobile")
-                            ? "bg-green-500"
-                            : "bg-purple-500"
+                          ? "bg-green-500"
+                          : "bg-purple-500"
                         : item.name.toLowerCase().includes("windows")
-                          ? "bg-blue-500"
-                          : item.name.toLowerCase().includes("mac") ||
-                              item.name.toLowerCase().includes("ios")
-                            ? "bg-gray-400"
-                            : item.name.toLowerCase().includes("linux")
-                              ? "bg-yellow-500"
-                              : item.name.toLowerCase().includes("android")
-                                ? "bg-green-500"
-                                : "bg-purple-500"
+                        ? "bg-blue-500"
+                        : item.name.toLowerCase().includes("mac") ||
+                          item.name.toLowerCase().includes("ios")
+                        ? "bg-gray-400"
+                        : item.name.toLowerCase().includes("linux")
+                        ? "bg-yellow-500"
+                        : item.name.toLowerCase().includes("android")
+                        ? "bg-green-500"
+                        : "bg-purple-500"
                     }`}
                     style={{
                       width: `${Math.max(
                         Math.min(Number(item.percentage), 100),
-                        1,
+                        1
                       )}%`,
                     }}
                   ></div>
@@ -925,21 +925,21 @@ export default function AnalyticsDashboard({
                       browser.name.toLowerCase().includes("chrome")
                         ? "bg-blue-500"
                         : browser.name.toLowerCase().includes("firefox")
-                          ? "bg-orange-500"
-                          : browser.name.toLowerCase().includes("safari")
-                            ? "bg-blue-300"
-                            : browser.name.toLowerCase().includes("edge")
-                              ? "bg-teal-500"
-                              : browser.name.toLowerCase().includes("explorer")
-                                ? "bg-blue-600"
-                                : browser.name.toLowerCase().includes("opera")
-                                  ? "bg-red-500"
-                                  : "bg-purple-500"
+                        ? "bg-orange-500"
+                        : browser.name.toLowerCase().includes("safari")
+                        ? "bg-blue-300"
+                        : browser.name.toLowerCase().includes("edge")
+                        ? "bg-teal-500"
+                        : browser.name.toLowerCase().includes("explorer")
+                        ? "bg-blue-600"
+                        : browser.name.toLowerCase().includes("opera")
+                        ? "bg-red-500"
+                        : "bg-purple-500"
                     }`}
                     style={{
                       width: `${Math.max(
                         Math.min(Number(browser.percentage), 100),
-                        1,
+                        1
                       )}%`,
                     }}
                   ></div>

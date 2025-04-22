@@ -6,7 +6,6 @@ import { PasswordPrompt } from "@/components/PasswordPrompt";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { getCachedLocationFromIP } from "@/lib/utils/geolocation";
-import { parseUserAgent } from "@/lib/utils/userAgent";
 import { getClientIP } from "@/lib/utils/ipAddress";
 import { verifyUrlPassword } from "../actions";
 import { UrlDocument } from "@/lib/types";
@@ -63,9 +62,6 @@ async function recordAnalytics(url: UrlDocument, slug: string) {
       .digest("hex")
       .substring(0, 16);
 
-    // Parse user agent data using our utility function
-    const userAgentData = parseUserAgent(userAgent);
-
     // Create analytics entry with location data
     await Analytics.create({
       urlId: url._id.toString(),
@@ -73,7 +69,7 @@ async function recordAnalytics(url: UrlDocument, slug: string) {
       visitorId,
       ipAddress,
       referer: effectiveReferrer,
-      userAgent: userAgentData,
+      userAgent: userAgent,
       location: locationData,
       timestamp: new Date(),
     });

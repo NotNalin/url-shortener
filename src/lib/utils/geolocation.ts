@@ -5,6 +5,7 @@ import { cache } from "react";
  */
 interface LocationData {
   country: string;
+  countryCode: string;
   region: string;
   city: string;
   isp: string;
@@ -18,7 +19,7 @@ interface LocationData {
  */
 async function getLocationFromIP(
   ipAddress: string,
-  retryCount = 0,
+  retryCount = 0
 ): Promise<LocationData | null> {
   const MAX_RETRIES = 2;
   const RETRY_DELAY = 1000; // 1-second delay between retries
@@ -55,7 +56,7 @@ async function getLocationFromIP(
         return getFallbackLocation();
       }
       console.warn(
-        `[getLocationFromIP] HTTP error: ${response.status} for IP: ${ipAddress}`,
+        `[getLocationFromIP] HTTP error: ${response.status} for IP: ${ipAddress}`
       );
       return getFallbackLocation();
     }
@@ -65,16 +66,17 @@ async function getLocationFromIP(
     // Check if we got valid data - don't throw, just log and use fallback
     if (data.error) {
       console.warn(
-        `[getLocationFromIP] API returned error: ${data.error} for IP: ${ipAddress}`,
+        `[getLocationFromIP] API returned error: ${data.error} for IP: ${ipAddress}`
       );
       return getFallbackLocation();
     }
 
     return {
-      country: data.country_name || "Unknown",
-      region: data.region || "Unknown",
-      city: data.city || "Unknown",
-      isp: data.org || "Unknown", // Internet Service Provider
+      country: data.country_name || "",
+      countryCode: data.country_code || "",
+      region: data.region || "",
+      city: data.city || "",
+      isp: data.org || "",
     };
   } catch (error) {
     // Retry on network errors or temporary failures
@@ -89,7 +91,7 @@ async function getLocationFromIP(
 
     console.error(
       `[getLocationFromIP] Error fetching geolocation for IP ${ipAddress}:`,
-      error,
+      error
     );
     return getFallbackLocation();
   }
@@ -100,7 +102,7 @@ async function getLocationFromIP(
  * @param ip - The IP address to check
  * @returns boolean indicating if IP is local/private
  */
-function isLocalIP(ip: string): boolean {
+export function isLocalIP(ip: string): boolean {
   // Normalize IP first
   const normalizedIP = ip.trim().toLowerCase();
 
@@ -135,10 +137,11 @@ function isLocalIP(ip: string): boolean {
  */
 function getFallbackLocation(): LocationData {
   return {
-    country: "Unknown",
-    region: "Unknown",
-    city: "Unknown",
-    isp: "Unknown",
+    country: "",
+    countryCode: "",
+    region: "",
+    city: "",
+    isp: "",
   };
 }
 
@@ -212,320 +215,28 @@ export const getCachedLocationFromIP = cache(
     } catch (error) {
       console.error(
         "[getCachedLocationFromIP] Error getting location data:",
-        error,
+        error
       );
       return getFallbackLocation();
     }
-  },
+  }
 );
 
-export function getCountryFlag(countryName: string): string {
-  // Create a reverse mapping from English country names to their ISO codes
-  // This uses the standard Intl.DisplayNames API in the intended way
-  try {
-    // List of ISO 3166-1 alpha-2 country codes
-    // This is a comprehensive list of codes that should be supported by most systems
-    const isoCodes = [
-      "AD",
-      "AE",
-      "AF",
-      "AG",
-      "AI",
-      "AL",
-      "AM",
-      "AO",
-      "AQ",
-      "AR",
-      "AS",
-      "AT",
-      "AU",
-      "AW",
-      "AX",
-      "AZ",
-      "BA",
-      "BB",
-      "BD",
-      "BE",
-      "BF",
-      "BG",
-      "BH",
-      "BI",
-      "BJ",
-      "BL",
-      "BM",
-      "BN",
-      "BO",
-      "BQ",
-      "BR",
-      "BS",
-      "BT",
-      "BV",
-      "BW",
-      "BY",
-      "BZ",
-      "CA",
-      "CC",
-      "CD",
-      "CF",
-      "CG",
-      "CH",
-      "CI",
-      "CK",
-      "CL",
-      "CM",
-      "CN",
-      "CO",
-      "CR",
-      "CU",
-      "CV",
-      "CW",
-      "CX",
-      "CY",
-      "CZ",
-      "DE",
-      "DJ",
-      "DK",
-      "DM",
-      "DO",
-      "DZ",
-      "EC",
-      "EE",
-      "EG",
-      "EH",
-      "ER",
-      "ES",
-      "ET",
-      "FI",
-      "FJ",
-      "FK",
-      "FM",
-      "FO",
-      "FR",
-      "GA",
-      "GB",
-      "GD",
-      "GE",
-      "GF",
-      "GG",
-      "GH",
-      "GI",
-      "GL",
-      "GM",
-      "GN",
-      "GP",
-      "GQ",
-      "GR",
-      "GS",
-      "GT",
-      "GU",
-      "GW",
-      "GY",
-      "HK",
-      "HM",
-      "HN",
-      "HR",
-      "HT",
-      "HU",
-      "ID",
-      "IE",
-      "IL",
-      "IM",
-      "IN",
-      "IO",
-      "IQ",
-      "IR",
-      "IS",
-      "IT",
-      "JE",
-      "JM",
-      "JO",
-      "JP",
-      "KE",
-      "KG",
-      "KH",
-      "KI",
-      "KM",
-      "KN",
-      "KP",
-      "KR",
-      "KW",
-      "KY",
-      "KZ",
-      "LA",
-      "LB",
-      "LC",
-      "LI",
-      "LK",
-      "LR",
-      "LS",
-      "LT",
-      "LU",
-      "LV",
-      "LY",
-      "MA",
-      "MC",
-      "MD",
-      "ME",
-      "MF",
-      "MG",
-      "MH",
-      "MK",
-      "ML",
-      "MM",
-      "MN",
-      "MO",
-      "MP",
-      "MQ",
-      "MR",
-      "MS",
-      "MT",
-      "MU",
-      "MV",
-      "MW",
-      "MX",
-      "MY",
-      "MZ",
-      "NA",
-      "NC",
-      "NE",
-      "NF",
-      "NG",
-      "NI",
-      "NL",
-      "NO",
-      "NP",
-      "NR",
-      "NU",
-      "NZ",
-      "OM",
-      "PA",
-      "PE",
-      "PF",
-      "PG",
-      "PH",
-      "PK",
-      "PL",
-      "PM",
-      "PN",
-      "PR",
-      "PS",
-      "PT",
-      "PW",
-      "PY",
-      "QA",
-      "RE",
-      "RO",
-      "RS",
-      "RU",
-      "RW",
-      "SA",
-      "SB",
-      "SC",
-      "SD",
-      "SE",
-      "SG",
-      "SH",
-      "SI",
-      "SJ",
-      "SK",
-      "SL",
-      "SM",
-      "SN",
-      "SO",
-      "SR",
-      "SS",
-      "ST",
-      "SV",
-      "SX",
-      "SY",
-      "SZ",
-      "TC",
-      "TD",
-      "TF",
-      "TG",
-      "TH",
-      "TJ",
-      "TK",
-      "TL",
-      "TM",
-      "TN",
-      "TO",
-      "TR",
-      "TT",
-      "TV",
-      "TW",
-      "TZ",
-      "UA",
-      "UG",
-      "UM",
-      "US",
-      "UY",
-      "UZ",
-      "VA",
-      "VC",
-      "VE",
-      "VG",
-      "VI",
-      "VN",
-      "VU",
-      "WF",
-      "WS",
-      "YE",
-      "YT",
-      "ZA",
-      "ZM",
-      "ZW",
-    ];
+export function getCountryFlag(countryCode: string | undefined): string {
+  if (!countryCode || countryCode === "XX" || countryCode.length !== 2) {
+    return "🌍"; // Return globe emoji for unknown/invalid country codes
+  }
 
-    // Create a mapping from country names to ISO codes
-    const nameToCodeMap: Record<string, string> = {};
+  // Convert country code to regional indicator symbols
+  // Each regional indicator symbol is made up of 2 characters
+  const OFFSET = 127397; // This is the offset to convert ASCII A-Z to regional indicators
+  const firstChar = countryCode.charCodeAt(0);
+  const secondChar = countryCode.charCodeAt(1);
 
-    // Use Intl.DisplayNames to get the standard name for each country code
-    const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
-
-    // Build the mapping
-    for (const code of isoCodes) {
-      try {
-        const name = regionNames.of(code);
-        if (name) {
-          nameToCodeMap[name] = code;
-          // Also add the name without any non-alphanumeric characters as a fallback
-          const simplifiedName = name.replace(/[^a-zA-Z0-9\s]/g, "").trim();
-          if (simplifiedName !== name) {
-            nameToCodeMap[simplifiedName] = code;
-          }
-        }
-      } catch {}
-    }
-
-    // Handle common name variations not covered by Intl.DisplayNames
-    const commonVariations: Record<string, string> = {
-      "United States of America": "US",
-      USA: "US",
-      America: "US",
-      UK: "GB",
-      Britain: "GB",
-      "Great Britain": "GB",
-      England: "GB", // Note: England is part of GB but not exactly the same
-    };
-
-    // Merge variations into our map
-    Object.assign(nameToCodeMap, commonVariations);
-
-    // Get the country code or default to empty string
-    const code = nameToCodeMap[countryName] || "";
-
-    // Convert country code to flag emoji (works in modern browsers)
-    if (!code) return "🌍"; // Earth globe as fallback
-
-    // For valid country codes, convert to regional indicator symbols
-    return code
-      .toUpperCase()
-      .split("")
-      .map((char) => String.fromCodePoint(char.charCodeAt(0) + 127397))
-      .join("");
-  } catch {
-    // If anything goes wrong, return the earth emoji as fallback
+  // Check if the country code contains valid uppercase ASCII characters
+  if (firstChar < 65 || firstChar > 90 || secondChar < 65 || secondChar > 90) {
     return "🌍";
   }
+
+  return String.fromCodePoint(firstChar + OFFSET, secondChar + OFFSET);
 }

@@ -5,6 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 import { Url } from "@/lib/models/url";
 import { AnalyticsData } from "@/lib/types";
 import { PipelineStage } from "mongoose";
+import { UAParser } from "ua-parser-js";
 
 // Cache for analytics queries to reduce database load
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -37,7 +38,7 @@ setInterval(() => {
  */
 function calculateDateRange(
   timeRange: TimeRange,
-  urlCreationDate: Date,
+  urlCreationDate: Date
 ): DateRange {
   const endDate = new Date(); // Current date and time
   const startDate = new Date(); // Start with current date
@@ -80,6 +81,16 @@ function calculateDateRange(
   }
 
   return { startDate, endDate };
+}
+
+// Add helper function to parse UserAgent string
+function parseUserAgentString(userAgent: string) {
+  const parser = new UAParser(userAgent);
+  return {
+    browser: parser.getBrowser().name || "",
+    os: parser.getOS().name || "",
+    device: parser.getDevice().type || "desktop",
+  };
 }
 
 /**
@@ -133,7 +144,7 @@ export async function GET(request: NextRequest) {
 
     // Unique visitors (distinct visitorIds)
     const uniqueVisitors = await Analytics.distinct("visitorId", query).then(
-      (ids) => ids.length,
+      (ids) => ids.length
     );
 
     // Get total views from URL record
@@ -144,7 +155,7 @@ export async function GET(request: NextRequest) {
       urlId,
       startDate,
       endDate,
-      timeRange,
+      timeRange
     );
 
     // Location data
@@ -154,43 +165,85 @@ export async function GET(request: NextRequest) {
     // Referers
     const referers = await getTopMetrics(query, "referer");
 
-    // Browser data
-    const browsers = await getTopMetrics(query, "userAgent.browser.name");
-    const devices = await getTopMetrics(query, "userAgent.device.deviceType");
-    const operatingSystems = await getTopMetrics(query, "userAgent.os.name");
-
-    // Get recent clicks
-    const recentClicks = await Analytics.find(query)
-      .sort({ timestamp: -1 })
-      .limit(5)
+    // Modify the recent clicks and analytics processing
+    const allAnalytics = await Analytics.find(query)
       .select(
-        "timestamp location.country userAgent.browser.name userAgent.os.name userAgent.device.deviceType referer",
+        "timestamp location.country location.countryCode userAgent referer"
       )
+      .sort({ timestamp: -1 })
       .lean();
+
+    // Parse all UserAgents once
+    const userAgentCache = new Map<
+      string,
+      ReturnType<typeof parseUserAgentString>
+    >();
+
+    const parsedUserAgents = allAnalytics.map((doc) => {
+      if (!userAgentCache.has(doc.userAgent)) {
+        userAgentCache.set(doc.userAgent, parseUserAgentString(doc.userAgent));
+      }
+      return userAgentCache.get(doc.userAgent)!;
+    });
+
+    // Get recent clicks from already fetched data
+    const recentClicks = allAnalytics.slice(0, 5).map((click) => ({
+      timestamp: click.timestamp,
+      country: click.location?.country || "",
+      countryCode: click.location?.countryCode || "",
+      ...userAgentCache.get(click.userAgent)!,
+      referer:
+        !click.referer || click.referer === ""
+          ? "Direct"
+          : click.referer.includes("dashboard/analytics")
+          ? "Password Protected Link"
+          : click.referer,
+    }));
+
+    // Calculate browser statistics
+    const browserCounts = new Map<string, number>();
+    const osCounts = new Map<string, number>();
+    const deviceCounts = new Map<string, number>();
+
+    parsedUserAgents.forEach((ua) => {
+      browserCounts.set(ua.browser, (browserCounts.get(ua.browser) || 0) + 1);
+      osCounts.set(ua.os, (osCounts.get(ua.os) || 0) + 1);
+      deviceCounts.set(ua.device, (deviceCounts.get(ua.device) || 0) + 1);
+    });
+
+    // Convert to required format
+    const total = parsedUserAgents.length;
+    const convertToMetricFormat = (map: Map<string, number>) =>
+      Array.from(map.entries())
+        .map(([name, count]) => ({
+          name,
+          count,
+          percentage: total > 0 ? Math.round((count / total) * 100) : 0,
+        }))
+        .sort((a, b) => b.count - a.count);
+
+    const browsers = convertToMetricFormat(browserCounts);
+    const operatingSystems = convertToMetricFormat(osCounts);
+    const devices = convertToMetricFormat(deviceCounts);
 
     const analyticsData: AnalyticsData = {
       totalVisits,
       uniqueVisitors,
       totalViews,
       timeRangeData: timeSeriesData,
-      countries,
-      regions,
+      countries: countries.map((c) => ({
+        ...c,
+        countryCode: c.countryCode || "Unknown",
+      })),
+      regions: regions.map((r) => ({
+        ...r,
+        countryCode: r.countryCode || "Unknown",
+      })),
       referers,
       devices,
       operatingSystems,
       browsers,
-      recentClicks: recentClicks.map((click) => ({
-        timestamp: click.timestamp,
-        country: click.location?.country || "Unknown",
-        browser: click.userAgent?.browser?.name || "Unknown",
-        os: click.userAgent?.os?.name || "Unknown",
-        referer:
-          !click.referer || click.referer === ""
-            ? "Direct"
-            : click.referer.includes("dashboard/analytics")
-              ? "Password Protected Link"
-              : click.referer,
-      })),
+      recentClicks,
     };
 
     // Update cache
@@ -207,7 +260,7 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json(
       { error: "Failed to fetch analytics" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -219,7 +272,7 @@ async function generateTimeSeriesData(
   urlId: string,
   startDate: Date,
   endDate: Date,
-  timeRange: TimeRange,
+  timeRange: TimeRange
 ) {
   // Format for grouping based on time range
   let format = "%Y-%m-%d"; // Default to daily
@@ -272,15 +325,25 @@ async function generateTimeSeriesData(
  */
 async function getTopMetrics(
   query: { urlId: string; timestamp: { $gte: Date; $lte: Date } },
-  field: string,
-): Promise<Array<{ name: string; count: number; percentage: number }>> {
-  // Handle special cases for userAgent fields
-  const groupField = field.startsWith("userAgent.")
-    ? `$${field}`
-    : field === "referer"
+  field: string
+): Promise<
+  Array<{
+    name: string;
+    count: number;
+    percentage: number;
+    countryCode?: string;
+  }>
+> {
+  const isLocationField =
+    field === "location.country" || field === "location.region";
+
+  const groupField =
+    field === "referer"
       ? {
           $cond: {
-            if: { $eq: ["$referer", ""] },
+            if: {
+              $or: [{ $eq: ["$referer", null] }, { $eq: ["$referer", ""] }],
+            },
             then: "Direct",
             else: {
               $cond: {
@@ -288,23 +351,20 @@ async function getTopMetrics(
                   $regexMatch: { input: "$referer", regex: "^https?://[^/]+$" },
                 },
                 then: "$referer",
-                else: {
-                  $cond: {
-                    if: {
-                      $regexMatch: {
-                        input: "$referer",
-                        regex: "^/dashboard/analytics/",
-                      },
-                    },
-                    then: "Password Protected Link",
-                    else: "$referer",
-                  },
-                },
+                else: "$referer",
               },
             },
           },
         }
-      : `$${field}`;
+      : {
+          $cond: {
+            if: {
+              $or: [{ $eq: [`$${field}`, null] }, { $eq: [`$${field}`, ""] }],
+            },
+            then: "",
+            else: `$${field}`,
+          },
+        };
 
   const pipeline: PipelineStage[] = [
     {
@@ -314,6 +374,9 @@ async function getTopMetrics(
       $group: {
         _id: groupField,
         count: { $sum: 1 },
+        ...(isLocationField && {
+          countryCode: { $first: "$location.countryCode" },
+        }),
       },
     },
     {
@@ -325,11 +388,12 @@ async function getTopMetrics(
         name: {
           $cond: {
             if: { $eq: ["$_id", null] },
-            then: "Unknown",
+            then: "",
             else: "$_id",
           },
         },
         count: 1,
+        ...(isLocationField && { countryCode: 1 }),
       },
     },
   ];
@@ -340,5 +404,14 @@ async function getTopMetrics(
   return result.map((item) => ({
     ...item,
     percentage: total > 0 ? Math.round((item.count / total) * 100) : 0,
-  }));
+    ...(isLocationField && {
+      countryCode:
+        item.countryCode || (item.name === "Unknown" ? "XX" : undefined),
+    }),
+  })) as Array<{
+    name: string;
+    count: number;
+    percentage: number;
+    countryCode: string;
+  }>;
 }
